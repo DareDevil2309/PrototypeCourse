@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Combatant.h"
+#include "Public/Abilities/MyAbilitySystemComponent.h"
 #include "PlayerCharacter.generated.h"
 /**
  *
@@ -16,7 +17,7 @@ class FUCK_API APlayerCharacter : public ACombatant
 
 public:
 	// Sets default values for this character's properties
-	APlayerCharacter();
+	APlayerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 protected:
 	// Called when the game starts or when spawned
@@ -124,8 +125,14 @@ protected:
 	void TurnAtRate(float Rate);
 	void LookUpAtRate(float Rate);
 
+private:
+	// Abilitiy sets
+	
+
 public:
 
+
+	
 	class USpringArmComponent* GetCameraBoom() const
 	{
 		return CameraBoom;

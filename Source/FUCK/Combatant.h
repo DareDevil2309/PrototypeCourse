@@ -4,16 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Public/Abilities/MyAbilitySystemComponent.h"
+#include "AbilitySystemInterface.h"
 #include "Combatant.generated.h"
 
 UCLASS()
-class FUCK_API ACombatant : public ACharacter
+class FUCK_API ACombatant : public ACharacter, public IAbilitySystemInterface 
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this character's properties
-	ACombatant();
+	ACombatant(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	virtual void PostInitializeComponents() override;
 
 public:
 	// Called every frame
@@ -21,6 +24,7 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 protected:
 	// Called when the game starts or when spawned
@@ -87,7 +91,9 @@ protected:
 	// anim called: get rate of actors look rotation
 	UFUNCTION(BlueprintCallable, Category = "Animation")
 	float GetCurrentRotationSpeed();
+	
+	UPROPERTY(VisibleAnywhere, Category = "Abilties")
+	TObjectPtr<UMyAbilitySystemComponent> AbilitySystemComponent;
 
 	float LastRotationSpeed;
-
 };

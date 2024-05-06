@@ -2,7 +2,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
-ACombatant::ACombatant()
+ACombatant::ACombatant(const FObjectInitializer& ObjectInitializer)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -17,6 +17,17 @@ ACombatant::ACombatant()
 	Stumbling = false;
 	RotationSmoothing = 5.0f;
 	LastRotationSpeed = 0.0f;
+
+	AbilitySystemComponent = ObjectInitializer.CreateDefaultSubobject<UMyAbilitySystemComponent>(this, TEXT("AbilitySystemComponent"));
+	AbilitySystemComponent->SetIsReplicated(false);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
+}
+
+void ACombatant::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	check(AbilitySystemComponent);
+	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 }
 
 // Called when the game starts or when spawned
@@ -41,6 +52,11 @@ void ACombatant::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+UAbilitySystemComponent* ACombatant::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
 }
 
 void ACombatant::Attack()
