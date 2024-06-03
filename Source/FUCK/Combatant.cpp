@@ -1,4 +1,6 @@
 #include "Combatant.h"
+
+#include "Abilities/HealthAttributeSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
@@ -21,6 +23,7 @@ ACombatant::ACombatant(const FObjectInitializer& ObjectInitializer)
 	AbilitySystemComponent = ObjectInitializer.CreateDefaultSubobject<UMyAbilitySystemComponent>(this, TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetIsReplicated(false);
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
+	HealthSet = CreateDefaultSubobject<UHealthAttributeSet>(TEXT("HealthSet")); 
 }
 
 void ACombatant::PostInitializeComponents()

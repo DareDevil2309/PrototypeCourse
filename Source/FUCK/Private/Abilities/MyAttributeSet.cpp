@@ -14,3 +14,8 @@ UWorld* UMyAttributeSet::GetWorld() const
 	check(Outer);
 	return Outer->GetWorld();
 }
+
+UMyAbilitySystemComponent* UMyAttributeSet::GetMyAbilitySystemComponent() const
+{
+	return Cast<UMyAbilitySystemComponent>(GetOwningAbilitySystemComponent());
+}

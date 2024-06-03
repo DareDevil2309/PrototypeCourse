@@ -6,6 +6,7 @@
 #include "AttributeSet.h"
 #include "GameplayEffect.h"
 #include "AbilitySystemComponent.h"
+#include "MyAbilitySystemComponent.h"
 #include "MyAttributeSet.generated.h"
 
 #define ATTRIBUTE_ACCESSORS(ClassName, PropertyName) \
@@ -33,4 +34,5 @@ class FUCK_API UMyAttributeSet : public UAttributeSet
 public:
 	UMyAttributeSet();
 	virtual UWorld* GetWorld() const override;
+	UMyAbilitySystemComponent* GetMyAbilitySystemComponent() const;
 };

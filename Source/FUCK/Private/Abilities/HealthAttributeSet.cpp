@@ -3,9 +3,12 @@
 
 #include "../../Public/Abilities/HealthAttributeSet.h"
 #include "GameplayEffectExtension.h"
+#include "Abilities/MyAbilitySystemComponent.h"
+#include "Chaos/Deformable/Utilities.h"
 #include "FUCK/Public/Messages/MyVerbMessage.h"
-#include "../Plugins/GameplayMessageRouter/Source/GameplayMessageRuntime/Public/GameFramework/GameplayMessageSubsystem.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
 
+class UGameplayMessageSubsystem;
 UE_DEFINE_GAMEPLAY_TAG(TAG_Gameplay_Damage, "Gameplay.Damage");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Gameplay_DamageImmunity, "Gameplay.DamageImmunity");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Gameplay_DamageSelfDestruct, "Gameplay.Damage.SelfDestruct");
@@ -99,6 +102,38 @@ void UHealthAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCall
 	}
 
 	IsOutOfHealth = (GetHealth() <= 0.0f);
+}
+
+void UHealthAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
+{
+	Super::PreAttributeBaseChange(Attribute, NewValue);
+	ClampAttribute(Attribute, NewValue);
+}
+
+void UHealthAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
+{
+	Super::PreAttributeChange(Attribute, NewValue);
+	ClampAttribute(Attribute, NewValue);
+}
+
+void UHealthAttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
+{
+	Super::PostAttributeChange(Attribute, OldValue, NewValue);
+
+	if (Attribute == GetMaxHealthAttribute())
+	{
+		if (GetHealth() > NewValue)
+		{
+			UMyAbilitySystemComponent* Asc = GetMyAbilitySystemComponent();
+			check(Asc);
+			Asc->ApplyModToAttribute(GetHealthAttribute(), EGameplayModOp::Override, NewValue);
+		}
+	}
+
+	if (IsOutOfHealth && (GetHealth() >= 0.0f))
+	{
+		IsOutOfHealth = false;
+	}
 }
 
 void UHealthAttributeSet::ClampAttribute(const FGameplayAttribute& Attribute, float& NewValue) const

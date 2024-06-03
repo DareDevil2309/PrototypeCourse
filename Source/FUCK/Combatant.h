@@ -95,5 +95,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Abilties")
 	TObjectPtr<UMyAbilitySystemComponent> AbilitySystemComponent;
 
+	UPROPERTY()
+	TObjectPtr<const class UHealthAttributeSet> HealthSet;
+
 	float LastRotationSpeed;
 };

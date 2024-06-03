@@ -5,7 +5,7 @@
 #include "GameplayTagContainer.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 
-#include "GameplayMessageTypes2.generated.h"
+#include "GameplayMessageTypes.generated.h"
 
 class UGameplayMessageRouter;
 

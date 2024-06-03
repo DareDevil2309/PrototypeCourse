@@ -1,14 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "GameFramework/AsyncAction_ListenForGameplayMessage.h"
-
-#include "Engine/Engine.h"
-#include "Engine/World.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
-#include "UObject/ScriptMacros.h"
-#include "UObject/Stack.h"
-
-#include UE_INLINE_GENERATED_CPP_BY_NAME(AsyncAction_ListenForGameplayMessage)
+#include "Engine/Engine.h"
 
 UAsyncAction_ListenForGameplayMessage* UAsyncAction_ListenForGameplayMessage::ListenForGameplayMessages(UObject* WorldContextObject, FGameplayTag Channel, UScriptStruct* PayloadType, EGameplayMessageMatch MatchType)
 {
@@ -107,4 +101,3 @@ void UAsyncAction_ListenForGameplayMessage::HandleMessageReceived(FGameplayTag C
 		SetReadyToDestroy();
 	}
 }
-

@@ -4,6 +4,7 @@
 #include "../../Public/Messages/MyVerbMessageHelpers.h"
 
 #include "GameFramework/PlayerState.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
 
 //////////////////////////////////////////////////////////////////////
 //

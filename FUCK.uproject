@@ -27,8 +27,8 @@
 			"Enabled": true
 		},
 		{
-			"Name": "GameplayMessageRouter",
-			"Enabled": false
+			"Name": "GameplayMessages",
+			"Enabled": true
 		}
 	]
 }

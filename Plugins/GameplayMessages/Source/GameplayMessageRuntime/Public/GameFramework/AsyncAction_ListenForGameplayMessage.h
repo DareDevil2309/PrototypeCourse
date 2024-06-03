@@ -2,15 +2,14 @@
 
 #pragma once
 
-#include "Engine/CancellableAsyncAction.h"
+#include "Kismet/BlueprintAsyncActionBase.h"
 #include "GameplayMessageSubsystem.h"
-#include "GameplayMessageTypes2.h"
+#include "GameplayMessageTypes.h"
+#include "Engine/CancellableAsyncAction.h"
 
 #include "AsyncAction_ListenForGameplayMessage.generated.h"
 
-class UScriptStruct;
-class UWorld;
-struct FFrame;
+class UAsyncAction_RegisterGameplayMessageReceiver;
 
 /**
  * Proxy object pin will be hidden in K2Node_GameplayMessageAsyncAction. Is used to get a reference to the object triggering the delegate for the follow up call of 'GetPayload'.
@@ -25,6 +24,7 @@ class GAMEPLAYMESSAGERUNTIME_API UAsyncAction_ListenForGameplayMessage : public 
 	GENERATED_BODY()
 
 public:
+	
 	/**
 	 * Asynchronously waits for a gameplay message to be broadcast on the specified channel.
 	 *
@@ -51,14 +51,17 @@ public:
 	virtual void SetReadyToDestroy() override;
 
 public:
+	
 	/** Called when a message is broadcast on the specified channel. Use GetPayload() to request the message payload. */
 	UPROPERTY(BlueprintAssignable)
 	FAsyncGameplayMessageDelegate OnMessageReceived;
 
 private:
+	
 	void HandleMessageReceived(FGameplayTag Channel, const UScriptStruct* StructType, const void* Payload);
 
 private:
+	
 	const void* ReceivedMessagePayloadPtr = nullptr;
 
 	TWeakObjectPtr<UWorld> WorldPtr;

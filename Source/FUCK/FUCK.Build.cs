@@ -6,6 +6,7 @@ public class FUCK : ModuleRules
 {
 	public FUCK(ReadOnlyTargetRules Target) : base(Target)
 	{
+		PrivateDependencyModuleNames.AddRange(new string[] { "GameplayMessageRuntime", "GameplayMessageRuntime" });
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
         PublicDependencyModuleNames.AddRange(new string[]
@@ -32,31 +33,8 @@ public class FUCK : ModuleRules
 	        "Hotfix",
 	        "Niagara",
 	        "ControlFlows",
-	        "PropertyPath"
-        });
-        
-        PrivateDependencyModuleNames.AddRange(new string[]
-        {
-	        "GameplayMessageRuntime",
-	        "InputCore",
-	        "Slate",
-	        "SlateCore",
-	        "RenderCore",
-	        "DeveloperSettings",
-	        "EnhancedInput",
-	        "NetCore",
-	        "RHI",
-	        "Projects",
-	        "Gauntlet",
-	        "UMG",
-	        "CommonUI",
-	        "CommonInput",
-	        "AudioMixer",
-	        "NetworkReplayStreaming",
-	        "ClientPilot",
-	        "AudioModulation",
-	        "EngineSettings",
-	        "DTLSHandlerComponent",
+	        "PropertyPath",
+	        "GameplayMessageRuntime"
         });
     }
 }

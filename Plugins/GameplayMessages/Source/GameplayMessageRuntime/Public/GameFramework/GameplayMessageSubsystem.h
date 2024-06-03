@@ -2,15 +2,14 @@
 
 #pragma once
 
-#include "GameFramework/GameplayMessageTypes2.h"
-#include "GameplayTagContainer.h"
+#include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
-#include "UObject/WeakObjectPtr.h"
+#include "Engine/World.h"
+#include "GameFramework/GameplayMessageTypes.h"
+#include "GameplayTagContainer.h"
+#include "Logging/LogMacros.h"
 
 #include "GameplayMessageSubsystem.generated.h"
-
-class UGameplayMessageSubsystem;
-struct FFrame;
 
 GAMEPLAYMESSAGERUNTIME_API DECLARE_LOG_CATEGORY_EXTERN(LogGameplayMessageSubsystem, Log, All);
 
@@ -24,6 +23,7 @@ USTRUCT(BlueprintType)
 struct GAMEPLAYMESSAGERUNTIME_API FGameplayMessageListenerHandle
 {
 public:
+	
 	GENERATED_BODY()
 
 	FGameplayMessageListenerHandle() {}
@@ -33,6 +33,7 @@ public:
 	bool IsValid() const { return ID != 0; }
 
 private:
+	
 	UPROPERTY(Transient)
 	TWeakObjectPtr<UGameplayMessageSubsystem> Subsystem;
 
@@ -199,6 +200,7 @@ public:
 	void UnregisterListener(FGameplayMessageListenerHandle Handle);
 
 protected:
+	
 	/**
 	 * Broadcast a message on the specified channel
 	 *
@@ -211,6 +213,7 @@ protected:
 	DECLARE_FUNCTION(execK2_BroadcastMessage);
 
 private:
+	
 	// Internal helper for broadcasting a message
 	void BroadcastMessageInternal(FGameplayTag Channel, const UScriptStruct* StructType, const void* MessageBytes);
 
@@ -224,6 +227,7 @@ private:
 	void UnregisterListenerInternal(FGameplayTag Channel, int32 HandleID);
 
 private:
+	
 	// List of all entries for a given channel
 	struct FChannelListenerList
 	{
@@ -232,5 +236,6 @@ private:
 	};
 
 private:
+	
 	TMap<FGameplayTag, FChannelListenerList> ListenerMap;
 };

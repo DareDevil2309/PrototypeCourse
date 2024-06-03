@@ -3,16 +3,12 @@
 #pragma once
 
 #include "K2Node_AsyncAction.h"
+#include "CoreMinimal.h"
+#include "UObject/ObjectMacros.h"
 
 #include "K2Node_AsyncAction_ListenForGameplayMessages.generated.h"
 
 class FBlueprintActionDatabaseRegistrar;
-class FKismetCompilerContext;
-class FMulticastDelegateProperty;
-class FString;
-class UEdGraph;
-class UEdGraphPin;
-class UObject;
 
 /**
  * Blueprint node which is spawned to handle the async logic for UAsyncAction_RegisterGameplayMessageReceiver
