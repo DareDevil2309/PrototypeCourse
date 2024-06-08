@@ -7,10 +7,6 @@
 
 AEnemyBase::AEnemyBase()
 {
-	Weapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WEAPON"));
-	Weapon->SetupAttachment(GetMesh(),"RightHandItem");
-	Weapon->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
-
 	PrimaryActorTick.bCanEverTick = true;
 	MovingForward = false;
 	MovingBackwards = false;
@@ -30,7 +26,6 @@ void AEnemyBase::BeginPlay()
 void AEnemyBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	TickStateMachine();
 }
 
 void AEnemyBase::TickStateMachine()
@@ -88,27 +83,7 @@ void AEnemyBase::StateIdle()
 
 void AEnemyBase::StateChaseClose()
 {
-	float Distance = FVector::Distance(GetActorLocation(), Target->GetActorLocation());
 
-	if (Distance <= 300.0f)
-	{
-		FVector TargetDirection = Target->GetActorLocation() - GetActorLocation();
-
-		float DotProduct = FVector::DotProduct(GetActorForwardVector(),TargetDirection.GetSafeNormal());
-
-		if (DotProduct > 0.95f && !Attacking && !Stumbling)
-		{
-			Attack(false);
-		}
-	}
-	else
-	{
-		AAIController* AIController = Cast<AAIController>(Controller);
-		if (!AIController->IsFollowingAPath())
-		{
-			AIController->MoveToActor(Target);
-		}
- 	}
 }
 
 void AEnemyBase::StateChaseFar()
@@ -121,33 +96,14 @@ void AEnemyBase::StateChaseFar()
 
 void AEnemyBase::StateAttack()
 {
-	if (AttackDamaging)
-	{
-		TSet<AActor*> OverlappingActors;
-		Weapon->GetOverlappingActors(OverlappingActors);
+}
 
-		for (AActor* OtherActor : OverlappingActors)
-		{
-			if (OtherActor == this)
-			{
-				continue;
-			}
-			if (!AttackHitActors.Contains(OtherActor))
-			{	
-				float AppliedDamage = UGameplayStatics::ApplyDamage(OtherActor, 1.0f, GetController(), this, UDamageType::StaticClass());
-
-				if (AppliedDamage > 0.0f)
-				{
-					AttackHitActors.Add(OtherActor);
-				}
-			}
-		}
-	}
-	
-	if (MovingForward)
-	{
-		MoveForward();
-	}
+void AEnemyBase::Death()
+{
+	Super::Death();
+	int AnimationIndex;
+	AnimationIndex = FMath::RandRange(0, DeathAnimations.Num() - 1);
+	PlayAnimMontage(DeathAnimations[AnimationIndex]);
 }
 
 void AEnemyBase::StateStumble()
@@ -168,10 +124,12 @@ void AEnemyBase::StateStumble()
 
 void AEnemyBase::StateTaunt()
 {
+
 }
 
 void AEnemyBase::StateDead()
 {
+	Cast<AAIController>(Controller)->StopMovement();
 }
 
 void AEnemyBase::FocusTarget()
@@ -182,36 +140,46 @@ void AEnemyBase::FocusTarget()
 
 float AEnemyBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	if (DamageCauser == this)
+	if (ActiveState != State::DEAD)
 	{
-		return 0.0f;
+		CurrentHealth -= DamageAmount;
+		if (DamageCauser == this)
+		{
+			return 0.0f;
+		}
+
+		if (CurrentHealth <= 0.0f)
+		{
+			Death();
+			SetState(State::DEAD);
+			return DamageAmount;
+		}
+
+		if (!Interruptable)
+		{
+			return DamageAmount;
+		}
+
+		EndAttack();
+		SetMovingBackwards(false);
+		SetMovingForward(false);
+		Stumbling = true;
+		SetState(State::STUMBLE);
+		Cast<AAIController>(Controller)->StopMovement();
+		int AnimationIndex;
+		do
+		{
+			AnimationIndex = FMath::RandRange(0, TakeHit_StumbleBackwards.Num() - 1);
+		} while (AnimationIndex == LastStumbleIndex);
+
+		LastStumbleIndex = AnimationIndex;
+
+		PlayAnimMontage(TakeHit_StumbleBackwards[AnimationIndex]);
+		FVector Direction = DamageCauser->GetActorLocation() - GetActorLocation();
+		Direction = FVector(Direction.X, Direction.Y, 0);
+		FRotator Rotation = FRotationMatrix::MakeFromX(Direction).Rotator();
+		SetActorRotation(Rotation);
 	}
-
-	if (!Interruptable)
-	{
-		return DamageAmount;
-	}
-
-	EndAttack();
-	SetMovingBackwards(false);
-	SetMovingForward(false);
-	Stumbling = true;
-	SetState(State::STUMBLE);
-	Cast<AAIController>(Controller)->StopMovement();
-	int AnimationIndex;
-	do
-	{
-		AnimationIndex = FMath::RandRange(0, TakeHit_StumbleBackwards.Num() - 1);
-	} 
-	while (AnimationIndex == LastStumbleIndex);
-
-	LastStumbleIndex = AnimationIndex;
-
-	PlayAnimMontage(TakeHit_StumbleBackwards[AnimationIndex]);
-	FVector Direction = DamageCauser->GetActorLocation() - GetActorLocation();
-	Direction = FVector(Direction.X, Direction.Y, 0);
-	FRotator Rotation = FRotationMatrix::MakeFromX(Direction).Rotator();
-	SetActorRotation(Rotation);
 	return DamageAmount;
 }
 

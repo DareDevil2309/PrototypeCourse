@@ -114,8 +114,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 	}
 	else if (Stumbling && MovingBackwards)
 	{
-		AddMovementInput(-GetActorForwardVector(), 40.0 * GetWorld()->GetDeltaSeconds())
-			;
+		AddMovementInput(-GetActorForwardVector(), 40.0 * GetWorld()->GetDeltaSeconds());
 	}
 	else if (Attacking && AttackDamaging)
 	{
@@ -129,7 +128,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 			if (!AttackHitActors.Contains(HitActor))
 			{
-				float AppliedDamage = UGameplayStatics::ApplyDamage(HitActor, 1.0f, GetController(), this, UDamageType::StaticClass());
+				float AppliedDamage = UGameplayStatics::ApplyDamage(HitActor, ClassDamage, GetController(), this, UDamageType::StaticClass());
 
 				if (AppliedDamage > 0.0f)
 				{
@@ -298,6 +297,27 @@ void APlayerCharacter::LookAtSmooth()
 	}
 }
 
+
+float APlayerCharacter::TakeDamageProjectile(float DamageAmount)
+{
+	END_ATTACK();
+	SetMovingBackwards(false);
+	SetMovingForward(false);
+	Stumbling = true;
+
+	int AnimationIndex = 0;
+	do
+	{
+		AnimationIndex = FMath::RandRange(0, TakeHit_StumbleBackwards.Num() - 1);
+	} while (AnimationIndex == LastStumbleIndex);
+
+	PlayAnimMontage(TakeHit_StumbleBackwards[AnimationIndex]);
+
+	LastStumbleIndex = AnimationIndex;
+
+	return DamageAmount;
+	
+}
 
 float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {

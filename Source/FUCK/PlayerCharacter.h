@@ -63,6 +63,8 @@ public:
 
 	void LookAtSmooth();
 
+	UFUNCTION(BlueprintCallable)
+	float TakeDamageProjectile(float DamageAmount);
 	float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
 		AController* EventInstigator, AActor* DamageCauser);
 
@@ -75,7 +77,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = Camera)
 	TSubclassOf<class ULegacyCameraShake> CameraShakeMinor;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Roll")
 	bool Rolling;
+
 	FRotator RollRotation;
 
 	int AttackIndex;

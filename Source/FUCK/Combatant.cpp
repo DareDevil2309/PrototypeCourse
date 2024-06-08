@@ -119,3 +119,17 @@ float ACombatant::GetCurrentRotationSpeed()
 	return 0.0f;
 }
 
+void ACombatant::Death()
+{
+	Target = nullptr;
+	TargetLocked = false;
+	NextAttackReady = false;
+	Attacking = false;
+	AttackDamaging = false;
+	MovingForward = false;
+	MovingBackwards = false;
+	RotateTowardsTarget = true;
+	Stumbling = false;
+	AttackHitActors.Empty();
+}
+

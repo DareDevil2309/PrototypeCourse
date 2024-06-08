@@ -26,6 +26,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Target")
 	AActor* Target;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
@@ -49,6 +50,17 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Animations")
 	TArray<UAnimMontage*> TakeHit_StumbleBackwards;
 
+	UPROPERTY(EditAnywhere, Category = "Animations")
+	TArray<UAnimMontage*> DeathAnimations;
+
+	UPROPERTY(EditAnywhere, BluePrintReadWrite, Category = "Health")
+	float MaxHealth;
+
+	UPROPERTY(EditAnywhere, BluePrintReadWrite, Category = "Health")
+	float CurrentHealth;
+	
+	UPROPERTY(EditAnywhere,BluePrintReadWrite, Category = "Damage")
+	float ClassDamage;
 	// Actors hit with the last attack - Used to stop duplicate hits
 	TArray<AActor*> AttackHitActors;
 
@@ -87,6 +99,8 @@ protected:
 	// anim called: get rate of actors look rotation
 	UFUNCTION(BlueprintCallable, Category = "Animation")
 	float GetCurrentRotationSpeed();
+
+	virtual void Death();
 
 	float LastRotationSpeed;
 
