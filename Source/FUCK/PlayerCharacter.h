@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Combatant.h"
+#include "UI/CombatantWidget.h"
 #include "PlayerCharacter.generated.h"
 /**
  *
@@ -16,7 +17,7 @@ class FUCK_API APlayerCharacter : public ACombatant
 
 public:
 	// Sets default values for this character's properties
-	APlayerCharacter();
+	APlayerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 protected:
 	// Called when the game starts or when spawned
@@ -53,6 +54,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	float CombatMovementSpeed;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Health")
+	TSubclassOf<class UCombatantWidget> CombatantWidget;
+
 	void CycleTarget(bool Clockwise = true);
 
 	UFUNCTION()
@@ -63,6 +67,8 @@ public:
 
 	void LookAtSmooth();
 
+	UFUNCTION(BlueprintCallable)
+	float TakeDamageProjectile(float DamageAmount);
 	float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
 		AController* EventInstigator, AActor* DamageCauser);
 
@@ -75,7 +81,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = Camera)
 	TSubclassOf<class ULegacyCameraShake> CameraShakeMinor;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Roll")
 	bool Rolling;
+
 	FRotator RollRotation;
 
 	int AttackIndex;
@@ -102,13 +110,14 @@ protected:
 
 	void Attack();
 	void Jump();
-	UFUNCTION(BlueprintCallable)
-	void END_ATTACK();
+
 	void EndAttack();
+
+	void Death();
+
 	void AttackNextReady();
+
 	void Roll();
-	UFUNCTION(BlueprintCallable)
-	void ATTACK_NEXT_READY();
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void StartRoll();
@@ -126,6 +135,7 @@ protected:
 
 public:
 
+	bool Dead = false;
 	class USpringArmComponent* GetCameraBoom() const
 	{
 		return CameraBoom;

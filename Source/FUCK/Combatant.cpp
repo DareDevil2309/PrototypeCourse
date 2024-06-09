@@ -2,7 +2,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
-ACombatant::ACombatant()
+ACombatant::ACombatant(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -43,6 +44,16 @@ void ACombatant::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 
 }
 
+float ACombatant::GetHealth()
+{
+	return CurrentHealth;
+}
+
+float ACombatant::GetMaxHealth()
+{
+	return MaxHealth;
+}
+
 void ACombatant::Attack()
 {
 	Attacking = true;
@@ -74,6 +85,14 @@ void ACombatant::SetAttackDamaging(bool Damaging)
 {
 	AttackDamaging = Damaging;
 
+}
+
+void ACombatant::DeletActorFromHitList()
+{
+	if (Target != NULL && AttackHitActors.Contains(Target))
+	{
+		AttackHitActors.Remove(Target);
+	}
 }
 
 void ACombatant::SetMovingForward(bool IsMovingForward)
@@ -117,5 +136,19 @@ float ACombatant::GetCurrentRotationSpeed()
 	if (RotateTowardsTarget)
 		return LastRotationSpeed;
 	return 0.0f;
+}
+
+void ACombatant::Death()
+{
+	Target = nullptr;
+	TargetLocked = false;
+	NextAttackReady = false;
+	Attacking = false;
+	AttackDamaging = false;
+	MovingForward = false;
+	MovingBackwards = false;
+	RotateTowardsTarget = false;
+	Stumbling = false;
+	AttackHitActors.Empty();
 }
 

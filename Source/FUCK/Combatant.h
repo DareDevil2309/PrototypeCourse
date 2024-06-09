@@ -6,14 +6,16 @@
 #include "GameFramework/Character.h"
 #include "Combatant.generated.h"
 
+
 UCLASS()
 class FUCK_API ACombatant : public ACharacter
 {
 	GENERATED_BODY()
+	DECLARE_MULTICAST_DELEGATE_OneParam(FHealthChangedSignature, float);
 
 public:
 	// Sets default values for this character's properties
-	ACombatant();
+	ACombatant(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 public:
 	// Called every frame
@@ -21,6 +23,10 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	float GetHealth();
+	float GetMaxHealth();
+	FHealthChangedSignature HealthChanged;
+	FHealthChangedSignature MaxHealthChanged;
 
 	UPROPERTY(VisibleInstanceOnly)
 	AActor* Target = nullptr;
@@ -30,6 +36,9 @@ protected:
 	virtual void BeginPlay() override;
 
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Target")
+	AActor* Target;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	bool TargetLocked;
 
@@ -51,6 +60,17 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Animations")
 	TArray<UAnimMontage*> TakeHit_StumbleBackwards;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
+	float MaxHealth;
+
+	UPROPERTY(EditAnywhere, Category = "Animations")
+	TArray<UAnimMontage*> DeathAnimations;
+
+	UPROPERTY(EditAnywhere, BluePrintReadWrite, Category = "Health")
+	float CurrentHealth;
+	
+	UPROPERTY(EditAnywhere,BluePrintReadWrite, Category = "Damage")
+	float ClassDamage;
 	// Actors hit with the last attack - Used to stop duplicate hits
 	TArray<AActor*> AttackHitActors;
 
@@ -68,6 +88,8 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	virtual void SetAttackDamaging(bool Damaging);
 
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void DeletActorFromHitList();
 	// anim called: set if moving forward
 	UFUNCTION(BlueprintCallable, Category = "Animation")
 	virtual void SetMovingForward(bool IsMovingForward);
@@ -89,6 +111,8 @@ protected:
 	// anim called: get rate of actors look rotation
 	UFUNCTION(BlueprintCallable, Category = "Animation")
 	float GetCurrentRotationSpeed();
+
+	virtual void Death();
 
 	float LastRotationSpeed;
 

@@ -1,6 +1,8 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Combatant.h"
+#include "Components/WidgetComponent.h"
+#include "UI/CombatantWidget.h"
 #include "EnemyBase.generated.h"
 
 UENUM(BlueprintType)
@@ -16,20 +18,22 @@ class FUCK_API AEnemyBase : public ACombatant
 
 public:
 
-	AEnemyBase();
+	AEnemyBase(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
-	UStaticMeshComponent* Weapon;
-
+	virtual void PostInitializeComponents() override;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Finite State Machine")
 	State ActiveState;
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
 		class AController* EventInstigator, AActor* DamageCauser);
 
-	UPROPERTY(EditAnywhere, Category = "Animations")
-	UAnimMontage* OverheadSmash;
 
+	UPROPERTY(EditAnywhere, Category = "Health")
+	TSubclassOf<class UCombatantWidget> CombatantWidgetClass;
+	
+	UPROPERTY(Instanced, EditDefaultsOnly, Category = "Health")
+	UWidgetComponent* HPBar;
 	int LastStumbleIndex;
 
 	bool isAttackTurn = false;
@@ -43,15 +47,12 @@ protected:
 	void SetState(State NewState);
 
 	virtual void StateIdle();
-
-	// state: actively trying to keep close and attack the target
 	virtual void StateChaseClose();
-
-	// state: engaged but not currently trying to attack (idle behavior)
 	virtual void StateChaseFar();
 
 	virtual void StateAttack();
 
+	void Death();
 	virtual void StateStumble();
 
 	virtual void StateTaunt();
@@ -68,6 +69,8 @@ protected:
 
 	virtual void AttackLunge();
 
+	bool TargetDead = false;
+
 	bool Interruptable;
 
 public:
@@ -77,9 +80,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void FocusTarget();
-
-	// returns weapon subobject
-	FORCEINLINE class UStaticMeshComponent* GetWeapon() const { return Weapon; }
-
+private:
+	bool pStateDeadExecuted = false;
 };
 

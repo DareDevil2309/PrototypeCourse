@@ -4,18 +4,26 @@
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/SceneComponent.h"
+#include "Kismet/BlueprintTypeConversions.h"
 
-AEnemyBase::AEnemyBase()
+AEnemyBase::AEnemyBase(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
-	Weapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WEAPON"));
-	Weapon->SetupAttachment(GetMesh(),"RightHandItem");
-	Weapon->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+	HPBar = ObjectInitializer.CreateDefaultSubobject<UWidgetComponent>(this, TEXT("HealthBar"));
+	HPBar->SetupAttachment(GetMesh());
 
 	PrimaryActorTick.bCanEverTick = true;
 	MovingForward = false;
 	MovingBackwards = false;
 	Interruptable = true;
 	LastStumbleIndex = 0;
+}
+
+void AEnemyBase::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	HPBar->SetWidgetClass(CombatantWidgetClass);
 }
 
 void AEnemyBase::BeginPlay()
@@ -25,47 +33,61 @@ void AEnemyBase::BeginPlay()
 	ActiveState = State::IDLE;
 
 	Target = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+
+	if (CombatantWidgetClass)
+	{
+		if (const auto CombatantWidget = Cast<UCombatantWidget>(CreateWidget(GetGameInstance(), CombatantWidgetClass)))
+		{
+			CombatantWidget->Init(this);
+			HPBar->SetWidget(CombatantWidget);
+		}
+	}
 }
 
 void AEnemyBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	TickStateMachine();
 }
 
 void AEnemyBase::TickStateMachine()
 {
-	switch (ActiveState)
+	if (!TargetDead)
 	{
-	case State::IDLE:
-		StateIdle();
-		break;
+		switch (ActiveState)
+		{
+		case State::IDLE:
+			StateIdle();
+			break;
 
-	case State::CHASE_CLOSE:
-		StateChaseClose();
-		break;
+		case State::CHASE_CLOSE:
+			StateChaseClose();
+			break;
 
-	case State::CHASE_FAR:
-		StateChaseFar();
-		break;
+		case State::CHASE_FAR:
+			StateChaseFar();
+			break;
 
-	case State::ATTACK:
-		StateAttack();
-		break;
+		case State::ATTACK:
+			StateAttack();
+			break;
 
-	case State::STUMBLE:
-		StateStumble();
-		break;
+		case State::STUMBLE:
+			StateStumble();
+			break;
 
-	case State::TAUNT:
-		StateTaunt();
-		break;
+		case State::TAUNT:
+			StateTaunt();
+			break;
 
-	case State::DEAD:
-		StateDead();
-		break;
+		case State::DEAD:
+			if (!pStateDeadExecuted)
+			{
+				StateDead();
+				pStateDeadExecuted = true;
+			}
+			break;
+		}
 	}
-
 }
 
 void AEnemyBase::SetState(State NewState)
@@ -78,7 +100,7 @@ void AEnemyBase::SetState(State NewState)
 
 void AEnemyBase::StateIdle()
 {
-	if (Target && FVector::Distance(Target->GetActorLocation(), GetActorLocation()) <= 1200.0f)
+	if (Target && FVector::Distance(Target->GetActorLocation(), GetActorLocation()) <= 1200.0f && !TargetDead)
 	{
 		TargetLocked = true;
 
@@ -88,27 +110,7 @@ void AEnemyBase::StateIdle()
 
 void AEnemyBase::StateChaseClose()
 {
-	float Distance = FVector::Distance(GetActorLocation(), Target->GetActorLocation());
 
-	if (Distance <= 300.0f)
-	{
-		FVector TargetDirection = Target->GetActorLocation() - GetActorLocation();
-
-		float DotProduct = FVector::DotProduct(GetActorForwardVector(),TargetDirection.GetSafeNormal());
-
-		if (DotProduct > 0.95f && !Attacking && !Stumbling)
-		{
-			Attack(false);
-		}
-	}
-	else
-	{
-		AAIController* AIController = Cast<AAIController>(Controller);
-		if (!AIController->IsFollowingAPath())
-		{
-			AIController->MoveToActor(Target);
-		}
- 	}
 }
 
 void AEnemyBase::StateChaseFar()
@@ -121,33 +123,15 @@ void AEnemyBase::StateChaseFar()
 
 void AEnemyBase::StateAttack()
 {
-	if (AttackDamaging)
-	{
-		TSet<AActor*> OverlappingActors;
-		Weapon->GetOverlappingActors(OverlappingActors);
+}
 
-		for (AActor* OtherActor : OverlappingActors)
-		{
-			if (OtherActor == this)
-			{
-				continue;
-			}
-			if (!AttackHitActors.Contains(OtherActor))
-			{	
-				float AppliedDamage = UGameplayStatics::ApplyDamage(OtherActor, 1.0f, GetController(), this, UDamageType::StaticClass());
-
-				if (AppliedDamage > 0.0f)
-				{
-					AttackHitActors.Add(OtherActor);
-				}
-			}
-		}
-	}
-	
-	if (MovingForward)
-	{
-		MoveForward();
-	}
+void AEnemyBase::Death()
+{
+	Super::Death();
+	HealthChanged.Broadcast(0.0f);
+	int AnimationIndex;
+	AnimationIndex = FMath::RandRange(0, DeathAnimations.Num() - 1);
+	PlayAnimMontage(DeathAnimations[AnimationIndex]);
 }
 
 void AEnemyBase::StateStumble()
@@ -168,10 +152,13 @@ void AEnemyBase::StateStumble()
 
 void AEnemyBase::StateTaunt()
 {
+
 }
 
 void AEnemyBase::StateDead()
 {
+	Death();
+	Cast<AAIController>(Controller)->StopMovement();
 }
 
 void AEnemyBase::FocusTarget()
@@ -187,31 +174,49 @@ float AEnemyBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent
 		return 0.0f;
 	}
 
-	if (!Interruptable)
+	else if (DamageCauser != Target && Target != NULL)
 	{
-		return DamageAmount;
+		return 0.0f;
 	}
 
-	EndAttack();
-	SetMovingBackwards(false);
-	SetMovingForward(false);
-	Stumbling = true;
-	SetState(State::STUMBLE);
-	Cast<AAIController>(Controller)->StopMovement();
-	int AnimationIndex;
-	do
+	else if (ActiveState != State::DEAD)
 	{
-		AnimationIndex = FMath::RandRange(0, TakeHit_StumbleBackwards.Num() - 1);
-	} 
-	while (AnimationIndex == LastStumbleIndex);
+		CurrentHealth -= DamageAmount;
 
-	LastStumbleIndex = AnimationIndex;
+		HealthChanged.Broadcast(CurrentHealth);
 
-	PlayAnimMontage(TakeHit_StumbleBackwards[AnimationIndex]);
-	FVector Direction = DamageCauser->GetActorLocation() - GetActorLocation();
-	Direction = FVector(Direction.X, Direction.Y, 0);
-	FRotator Rotation = FRotationMatrix::MakeFromX(Direction).Rotator();
-	SetActorRotation(Rotation);
+		if (CurrentHealth <= 0.0f)
+		{
+			SetState(State::DEAD);
+			return DamageAmount;
+		}
+
+		if (!Interruptable)
+		{
+			return DamageAmount;
+		}
+
+		EndAttack();
+		SetMovingBackwards(false);
+		SetMovingForward(false);
+		Stumbling = true;
+		SetState(State::STUMBLE);
+		Cast<AAIController>(Controller)->StopMovement();
+		int AnimationIndex;
+		do
+		{
+			AnimationIndex = FMath::RandRange(0, TakeHit_StumbleBackwards.Num() - 1);
+		} while (AnimationIndex == LastStumbleIndex);
+
+		LastStumbleIndex = AnimationIndex;
+
+		PlayAnimMontage(TakeHit_StumbleBackwards[AnimationIndex]);
+		FVector Direction = DamageCauser->GetActorLocation() - GetActorLocation();
+		Direction = FVector(Direction.X, Direction.Y, 0);
+		FRotator Rotation = FRotationMatrix::MakeFromX(Direction).Rotator();
+		SetActorRotation(Rotation);
+	}
+	
 	return DamageAmount;
 }
 
