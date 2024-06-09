@@ -28,16 +28,12 @@ public:
 	FHealthChangedSignature HealthChanged;
 	FHealthChangedSignature MaxHealthChanged;
 
-	UPROPERTY(VisibleInstanceOnly)
-	AActor* Target = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Target")
+	AActor* Target;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Target")
-	AActor* Target;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	bool TargetLocked;

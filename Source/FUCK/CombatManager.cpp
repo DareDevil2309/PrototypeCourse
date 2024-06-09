@@ -38,9 +38,12 @@ void UCombatManager::Timer()
 }
 void UCombatManager::NextAttacker()
 {
-	AEnemyBase* tempRef = Cast<AEnemyBase>(owner->NearbyEnemies[rand() % (owner->NearbyEnemies.Num())]);
-	tempRef->isAttackTurn=true;
-	//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, tempRef->GetName());
+	if (owner->NearbyEnemies.Num() > 0)
+	{
+		AEnemyBase* _enemyRef = Cast<AEnemyBase>(owner->NearbyEnemies[FMath::RandRange(0, owner->NearbyEnemies.Num() - 1)]);
+		_enemyRef->isAttackTurn = true;
+		//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, tempRef->GetName());
+	}
 }
 
 
