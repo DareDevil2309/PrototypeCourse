@@ -22,11 +22,6 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Animations")
 	TArray<UAnimMontage*> LongAttackAnimations;
-
-	float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
-		AController* EventInstigator, AActor* DamageCauser);
-
-	// returns weapon subobject
 	FORCEINLINE class UStaticMeshComponent* GetWeapon() const { return Weapons; }
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
@@ -36,7 +31,6 @@ protected:
 	void StateChaseClose();
 	void LongAttack(bool Rotate = true);
 	void MoveForward();
-	virtual void TickStateMachine();
 
 private:
 
@@ -46,8 +40,4 @@ private:
 	float LongAttack_ForwardSpeed;
 
 	void StateAttack();
-
-	int QuickHitsTaken;
-	float QuickHitsTimestamp;
-	
 };

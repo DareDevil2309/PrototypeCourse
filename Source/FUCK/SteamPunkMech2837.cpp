@@ -8,6 +8,7 @@
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "PlayerCharacter.h"
 
 ASteamPunkMech2837::ASteamPunkMech2837()
 {
@@ -25,41 +26,6 @@ void ASteamPunkMech2837::Tick(float DeltaTime)
 
 	TickStateMachine();
 }
-
-void ASteamPunkMech2837::TickStateMachine()
-{
-	switch (ActiveState)
-	{
-	case State::IDLE:
-		StateIdle();
-		break;
-
-	case State::CHASE_CLOSE:
-		StateChaseClose();
-		break;
-
-	case State::CHASE_FAR:
-		StateChaseFar();
-		break;
-
-	case State::ATTACK:
-		StateAttack();
-		break;
-
-	case State::STUMBLE:
-		StateStumble();
-		break;
-
-	case State::TAUNT:
-		StateTaunt();
-		break;
-
-	case State::DEAD:
-		StateDead();
-		break;
-	}
-}
-
 
 void ASteamPunkMech2837::Attack(bool Rotate)
 {
@@ -82,7 +48,7 @@ void ASteamPunkMech2837::Attack(bool Rotate)
 	AAIController* AIController = Cast<AAIController>(Controller);
 	float Distance = FVector::Distance(GetActorLocation(), Target->GetActorLocation());
 	ForwardSpeedAttack = Distance + 400.0f;
-	PlayAnimMontage(AttackAnimations[0]);
+	PlayAnimMontage(AttackAnimations[1]);
 }
 
 void ASteamPunkMech2837::StateChaseClose()
@@ -97,7 +63,7 @@ void ASteamPunkMech2837::StateChaseClose()
 
 	if (Distance <= 900.f && DotProduct >= 0.95f)
 	{
-		if (Distance <= 300.f)
+		if (Distance <= 150.0f)
 		{
 			Attack(true);
 			return;
@@ -137,7 +103,13 @@ void ASteamPunkMech2837::StateAttack()
 			}
 			if (!AttackHitActors.Contains(OtherActor))
 			{
-				float AppliedDamage = UGameplayStatics::ApplyDamage(OtherActor, 1.0f, GetController(), this, UDamageType::StaticClass());
+				float AppliedDamage = UGameplayStatics::ApplyDamage(OtherActor, ClassDamage, GetController(), this, UDamageType::StaticClass());
+
+				if (Target && dynamic_cast<APlayerCharacter*>(Target)->Dead)
+				{
+					TargetDead = true;
+					return;
+				}
 
 				if (AppliedDamage > 0.0f)
 				{

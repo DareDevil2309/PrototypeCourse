@@ -87,6 +87,14 @@ void ACombatant::SetAttackDamaging(bool Damaging)
 
 }
 
+void ACombatant::DeletActorFromHitList()
+{
+	if (Target != NULL && AttackHitActors.Contains(Target))
+	{
+		AttackHitActors.Remove(Target);
+	}
+}
+
 void ACombatant::SetMovingForward(bool IsMovingForward)
 {
 	MovingForward = IsMovingForward;
@@ -139,7 +147,7 @@ void ACombatant::Death()
 	AttackDamaging = false;
 	MovingForward = false;
 	MovingBackwards = false;
-	RotateTowardsTarget = true;
+	RotateTowardsTarget = false;
 	Stumbling = false;
 	AttackHitActors.Empty();
 }

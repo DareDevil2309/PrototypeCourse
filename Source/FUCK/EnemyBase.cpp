@@ -51,37 +51,43 @@ void AEnemyBase::Tick(float DeltaTime)
 
 void AEnemyBase::TickStateMachine()
 {
-	switch (ActiveState)
+	if (!TargetDead)
 	{
-	case State::IDLE:
-		StateIdle();
-		break;
+		switch (ActiveState)
+		{
+		case State::IDLE:
+			StateIdle();
+			break;
 
-	case State::CHASE_CLOSE:
-		StateChaseClose();
-		break;
+		case State::CHASE_CLOSE:
+			StateChaseClose();
+			break;
 
-	case State::CHASE_FAR:
-		StateChaseFar();
-		break;
+		case State::CHASE_FAR:
+			StateChaseFar();
+			break;
 
-	case State::ATTACK:
-		StateAttack();
-		break;
+		case State::ATTACK:
+			StateAttack();
+			break;
 
-	case State::STUMBLE:
-		StateStumble();
-		break;
+		case State::STUMBLE:
+			StateStumble();
+			break;
 
-	case State::TAUNT:
-		StateTaunt();
-		break;
+		case State::TAUNT:
+			StateTaunt();
+			break;
 
-	case State::DEAD:
-		StateDead();
-		break;
+		case State::DEAD:
+			if (!pStateDeadExecuted)
+			{
+				StateDead();
+				pStateDeadExecuted = true;
+			}
+			break;
+		}
 	}
-
 }
 
 void AEnemyBase::SetState(State NewState)
@@ -94,7 +100,7 @@ void AEnemyBase::SetState(State NewState)
 
 void AEnemyBase::StateIdle()
 {
-	if (Target && FVector::Distance(Target->GetActorLocation(), GetActorLocation()) <= 1200.0f)
+	if (Target && FVector::Distance(Target->GetActorLocation(), GetActorLocation()) <= 1200.0f && !TargetDead)
 	{
 		TargetLocked = true;
 
@@ -151,6 +157,7 @@ void AEnemyBase::StateTaunt()
 
 void AEnemyBase::StateDead()
 {
+	Death();
 	Cast<AAIController>(Controller)->StopMovement();
 }
 
@@ -162,23 +169,28 @@ void AEnemyBase::FocusTarget()
 
 float AEnemyBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	if (ActiveState != State::DEAD)
+	if (DamageCauser == this)
+	{
+		return 0.0f;
+	}
+
+	else if (DamageCauser != Target && Target != NULL)
+	{
+		return 0.0f;
+	}
+
+	else if (ActiveState != State::DEAD)
 	{
 		CurrentHealth -= DamageAmount;
-		if (DamageCauser == this)
-		{
-			return 0.0f;
-		}
+
+		HealthChanged.Broadcast(CurrentHealth);
 
 		if (CurrentHealth <= 0.0f)
 		{
-			Death();
 			SetState(State::DEAD);
 			return DamageAmount;
 		}
 
-		HealthChanged.Broadcast(CurrentHealth);
-		
 		if (!Interruptable)
 		{
 			return DamageAmount;

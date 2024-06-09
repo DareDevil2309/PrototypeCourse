@@ -79,7 +79,6 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	NextAttackReady = false;
 	AttackDamaging = false;
 	AttackIndex = 0;
-
 	PassiveMovementSpeed = 450.0f;
 	CombatMovementSpeed = 450.0f;
 	GetCharacterMovement()->MaxWalkSpeed = PassiveMovementSpeed;
@@ -116,52 +115,69 @@ void APlayerCharacter::BeginPlay()
 // Called every frame
 void APlayerCharacter::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
-
-	FocusTarget();
-
-	if (Rolling)
+	
+	if (!Dead)
 	{
-		AddMovementInput(GetActorForwardVector(), 600 * GetWorld()->GetDeltaSeconds());
-	}
-	else if (Stumbling && MovingBackwards)
-	{
-		AddMovementInput(-GetActorForwardVector(), 40.0 * GetWorld()->GetDeltaSeconds());
-	}
-	else if (Attacking && AttackDamaging)
-	{
-		TSet<AActor*> WeaponOverlappingActors;
-		Weapon->GetOverlappingActors(WeaponOverlappingActors);
+		Super::Tick(DeltaTime);
 
-		for (AActor* HitActor : WeaponOverlappingActors)
+		FocusTarget();
+
+		if (Rolling)
 		{
-			if (HitActor == this)
-				continue;
+			AddMovementInput(GetActorForwardVector(), 600 * GetWorld()->GetDeltaSeconds());
+		}
+		else if (Stumbling && MovingBackwards)
+		{
+			AddMovementInput(-GetActorForwardVector(), 40.0 * GetWorld()->GetDeltaSeconds());
+		}
+		else if (Attacking && AttackDamaging)
+		{
+			TSet<AActor*> WeaponOverlappingActors;
+			Weapon->GetOverlappingActors(WeaponOverlappingActors);
 
-			if (!AttackHitActors.Contains(HitActor))
+			for (AActor* HitActor : WeaponOverlappingActors)
 			{
-				float AppliedDamage = UGameplayStatics::ApplyDamage(HitActor, ClassDamage, GetController(), this, UDamageType::StaticClass());
+				if (HitActor == this)
+					continue;
 
-				if (AppliedDamage > 0.0f)
+				if (!AttackHitActors.Contains(HitActor))
 				{
-					AttackHitActors.Add(HitActor);
+					float AppliedDamage = UGameplayStatics::ApplyDamage(HitActor, ClassDamage, GetController(), this, UDamageType::StaticClass());
 
-					GetWorld()->GetFirstPlayerController()->PlayerCameraManager->StartCameraShake(CameraShakeMinor);
+					if (AppliedDamage > 0.0f)
+					{
+						AttackHitActors.Add(HitActor);
+
+						GetWorld()->GetFirstPlayerController()->PlayerCameraManager->StartCameraShake(CameraShakeMinor);
+					}
 				}
 			}
 		}
-	}
 
-	if (Target != NULL && TargetLocked)
-	{
-		FVector TargetDirection = Target->GetActorLocation() - GetActorLocation();
-
-		if (TargetDirection.Size2D() > 400)
+		if (Target != NULL && TargetLocked)
 		{
-			FRotator Difference = UKismetMathLibrary::NormalizedDeltaRotator(Controller->GetControlRotation(), TargetDirection.ToOrientationRotator());
+			if (dynamic_cast<AEnemyBase*>(Target)->ActiveState == State::DEAD) {
+				Target = NULL;
+				if (NearbyEnemies.Num() > 0) {
+					CycleTarget();
+				}
+				else
+				{
+					SetInCombat(false);
+				}
+			}
+			else
+			{
+				FVector TargetDirection = Target->GetActorLocation() - GetActorLocation();
 
-			if (FMath::Abs(Difference.Yaw) > 30.0f)
-				AddControllerYawInput(DeltaTime * -Difference.Yaw * 0.5f);
+				if (TargetDirection.Size2D() > 400)
+				{
+					FRotator Difference = UKismetMathLibrary::NormalizedDeltaRotator(Controller->GetControlRotation(), TargetDirection.ToOrientationRotator());
+
+					if (FMath::Abs(Difference.Yaw) > 30.0f)
+						AddControllerYawInput(DeltaTime * -Difference.Yaw * 0.5f);
+				}
+			}
 		}
 	}
 }
@@ -204,7 +220,7 @@ void APlayerCharacter::LookUpAtRate(float Rate)
 
 void APlayerCharacter::MoveForward(float Value)
 {
-	if ((Controller != NULL) && (Value != 0.0f) && !Attacking && !Rolling && !Stumbling)
+	if ((Controller != NULL) && (Value != 0.0f) && !Attacking && !Rolling && !Stumbling && !Dead)
 	{
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
@@ -218,7 +234,7 @@ void APlayerCharacter::MoveForward(float Value)
 
 void APlayerCharacter::MoveRight(float Value)
 {
-	if ((Controller != NULL) && (Value != 0.0f) && !Attacking && !Rolling && !Stumbling)
+	if ((Controller != NULL) && (Value != 0.0f) && !Attacking && !Rolling && !Stumbling && !Dead)
 	{
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
@@ -312,55 +328,79 @@ void APlayerCharacter::LookAtSmooth()
 
 float APlayerCharacter::TakeDamageProjectile(float DamageAmount)
 {
-	END_ATTACK();
-	SetMovingBackwards(false);
-	SetMovingForward(false);
-	Stumbling = true;
-
-	int AnimationIndex = 0;
-	do
+	if (!Dead)
 	{
-		AnimationIndex = FMath::RandRange(0, TakeHit_StumbleBackwards.Num() - 1);
-	} while (AnimationIndex == LastStumbleIndex);
+		if (Rolling)
+		{
+			return 0.0f;
+		}
+		CurrentHealth -= DamageAmount;
+		HealthChanged.Broadcast(CurrentHealth);
+		if (CurrentHealth <= 0.0f)
+		{
+			Death();
+			return DamageAmount;
+		}
+		EndAttack();
+		SetMovingBackwards(false);
+		SetMovingForward(false);
+		Stumbling = true;
 
-	PlayAnimMontage(TakeHit_StumbleBackwards[AnimationIndex]);
+		int AnimationIndex = 0;
+		do
+		{
+			AnimationIndex = FMath::RandRange(0, TakeHit_StumbleBackwards.Num() - 1);
+		} while (AnimationIndex == LastStumbleIndex);
 
-	LastStumbleIndex = AnimationIndex;
+		PlayAnimMontage(TakeHit_StumbleBackwards[AnimationIndex]);
 
+		LastStumbleIndex = AnimationIndex;
+	}
 	return DamageAmount;
 	
 }
 
 float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	if (DamageCauser == this || Rolling)
+	if (!Dead)
 	{
-		return 0.0f;
+		if (DamageCauser == this || Rolling)
+		{
+			return 0.0f;
+		}
+
+		CurrentHealth -= DamageAmount;
+		HealthChanged.Broadcast(CurrentHealth);
+
+		if (CurrentHealth <= 0.0f)
+		{
+			Death();
+			return DamageAmount;
+		}
+
+		EndAttack();
+		SetMovingBackwards(false);
+		SetMovingForward(false);
+		Stumbling = true;
+
+		int AnimationIndex = 0;
+		do
+		{
+			AnimationIndex = FMath::RandRange(0, TakeHit_StumbleBackwards.Num() - 1);
+		} while (AnimationIndex == LastStumbleIndex);
+
+		PlayAnimMontage(TakeHit_StumbleBackwards[AnimationIndex]);
+
+		LastStumbleIndex = AnimationIndex;
+
+		FVector Direction = DamageCauser->GetActorLocation() - GetActorLocation();
+
+		Direction = FVector(Direction.X, Direction.Y, 0);
+
+		FRotator Rotation = FRotationMatrix::MakeFromX(Direction).Rotator();
+
+		SetActorRotation(Rotation);
 	}
-
-	END_ATTACK();
-	SetMovingBackwards(false);
-	SetMovingForward(false);
-	Stumbling = true;
-
-	int AnimationIndex = 0;
-	do
-	{
-		AnimationIndex = FMath::RandRange(0, TakeHit_StumbleBackwards.Num() - 1);
-	} 
-	while (AnimationIndex == LastStumbleIndex);
-
-	PlayAnimMontage(TakeHit_StumbleBackwards[AnimationIndex]);
-
-	LastStumbleIndex = AnimationIndex;
-
-	FVector Direction = DamageCauser->GetActorLocation() - GetActorLocation();
-
-	Direction = FVector(Direction.X, Direction.Y, 0);
-
-	FRotator Rotation = FRotationMatrix::MakeFromX(Direction).Rotator();
-
-	SetActorRotation(Rotation);
 	return DamageAmount;
 }
 
@@ -383,7 +423,7 @@ void APlayerCharacter::OnEnemyDetectionEndOverlap(UPrimitiveComponent* Overlappe
 
 void APlayerCharacter::Attack()
 {
-	if ((!Attacking || NextAttackReady) && !Rolling && !Stumbling && !GetCharacterMovement()->IsFalling())
+	if ((!Attacking || NextAttackReady) && !Rolling && !Stumbling && !GetCharacterMovement()->IsFalling() && !Dead)
 	{
 		Super::Attack();
 
@@ -404,30 +444,30 @@ void APlayerCharacter::Attack()
 	} */
 }
 
-void APlayerCharacter::ATTACK_NEXT_READY()
-{
-	NextAttackReady = true;
-}
-
-void APlayerCharacter::END_ATTACK()
+void APlayerCharacter::EndAttack()
 {
 	Super::EndAttack();
 	AttackIndex = 0;
 }
 
-void APlayerCharacter::EndAttack()
+void APlayerCharacter::Death()
 {
-
+	Super::Death();
+	EndAttack();
+	Target = NULL;
+	SetInCombat(false);
+	Dead = true;
+	PlayAnimMontage(DeathAnimations[0]);
 }
 
 void APlayerCharacter::AttackNextReady()
 {
-
+	Super::AttackNextReady();
 }
 
 void APlayerCharacter::Jump()
 {
-	if (!Attacking && !Rolling)
+	if (!Attacking && !Rolling && !Dead)
 	{
 		ACharacter::Jump();
 	}
@@ -435,12 +475,12 @@ void APlayerCharacter::Jump()
 
 void APlayerCharacter::Roll()
 {
-	if (Attacking || Rolling || Stumbling || GetCharacterMovement()->IsFalling())
+	if (Dead ||Attacking || Rolling || Stumbling || GetCharacterMovement()->IsFalling())
 	{
 		return;
 	}
 
-	END_ATTACK();
+	EndAttack();
 
 	if (InputDirection != FVector::ZeroVector)
 	{
@@ -470,7 +510,7 @@ void APlayerCharacter::StartRoll()
 
 	GetCharacterMovement()->MaxWalkSpeed = 400.0f;
 
-	END_ATTACK();
+	EndAttack();
 }
 
 void APlayerCharacter::EndRoll()

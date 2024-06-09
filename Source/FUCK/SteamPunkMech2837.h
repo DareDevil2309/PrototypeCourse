@@ -31,7 +31,6 @@ protected:
 	void Attack(bool Rotate = true);
 	void StateChaseClose();
 	void MoveForward();
-	virtual void TickStateMachine();
 
 	void MagicAttack(bool Rotate = true);
 

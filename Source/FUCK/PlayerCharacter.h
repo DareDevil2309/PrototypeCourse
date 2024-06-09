@@ -110,13 +110,14 @@ protected:
 
 	void Attack();
 	void Jump();
-	UFUNCTION(BlueprintCallable)
-	void END_ATTACK();
+
 	void EndAttack();
+
+	void Death();
+
 	void AttackNextReady();
+
 	void Roll();
-	UFUNCTION(BlueprintCallable)
-	void ATTACK_NEXT_READY();
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void StartRoll();
@@ -134,6 +135,7 @@ protected:
 
 public:
 
+	bool Dead = false;
 	class USpringArmComponent* GetCameraBoom() const
 	{
 		return CameraBoom;

@@ -84,6 +84,8 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	virtual void SetAttackDamaging(bool Damaging);
 
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void DeletActorFromHitList();
 	// anim called: set if moving forward
 	UFUNCTION(BlueprintCallable, Category = "Animation")
 	virtual void SetMovingForward(bool IsMovingForward);

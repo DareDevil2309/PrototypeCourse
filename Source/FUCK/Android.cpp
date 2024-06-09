@@ -6,7 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
-
+#include "PlayerCharacter.h"
 
 AAndroid::AAndroid()
 {
@@ -22,42 +22,9 @@ void AAndroid::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	TickStateMachine();
+	Super::TickStateMachine();
 }
 
-void AAndroid::TickStateMachine()
-{
-	switch (ActiveState)
-	{
-	case State::IDLE:
-		StateIdle();
-		break;
-
-	case State::CHASE_CLOSE:
-		StateChaseClose();
-		break;
-
-	case State::CHASE_FAR:
-		StateChaseFar();
-		break;
-
-	case State::ATTACK:
-		StateAttack();
-		break;
-
-	case State::STUMBLE:
-		StateStumble();
-		break;
-
-	case State::TAUNT:
-		StateTaunt();
-		break;
-
-	case State::DEAD:
-		StateDead();
-		break;
-	}
-}
 
 void AAndroid::StateChaseClose()
 {
@@ -134,8 +101,13 @@ void AAndroid::StateAttack()
 			}
 			if (!AttackHitActors.Contains(OtherActor))
 			{
-				float AppliedDamage = UGameplayStatics::ApplyDamage(OtherActor, 1.0f, GetController(), this, UDamageType::StaticClass());
+				float AppliedDamage = UGameplayStatics::ApplyDamage(OtherActor, ClassDamage, GetController(), this, UDamageType::StaticClass());
 
+				if (Target && dynamic_cast<APlayerCharacter*>(Target)->Dead)
+				{
+					TargetDead = true;
+					return;
+				}
 				if (AppliedDamage > 0.0f)
 				{
 					AttackHitActors.Add(OtherActor);
@@ -148,29 +120,4 @@ void AAndroid::StateAttack()
 	{
 		MoveForward();
 	}
-}
-
-float AAndroid::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
-{
-	if (DamageCauser != Target)
-	{
-		return 0.0f;
-	}
-
-	if (QuickHitsTaken == 0 || GetWorld()->GetTimeSeconds() - QuickHitsTimestamp <= 1.0f)
-	{
-		QuickHitsTaken++;
-		QuickHitsTimestamp = GetWorld()->GetTimeSeconds();
-
-		if (QuickHitsTaken >= 3)
-		{
-			Interruptable = false;
-		}
-	}
-	else
-	{
-		QuickHitsTaken = 0;
-		Interruptable = true;
-	}
-	return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 }

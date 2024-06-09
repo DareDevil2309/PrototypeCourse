@@ -67,6 +67,8 @@ protected:
 
 	virtual void AttackLunge();
 
+	bool TargetDead = false;
+
 	bool Interruptable;
 
 public:
@@ -76,5 +78,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void FocusTarget();
+private:
+	bool pStateDeadExecuted = false;
 };
 
