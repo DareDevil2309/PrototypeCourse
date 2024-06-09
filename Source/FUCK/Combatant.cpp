@@ -2,7 +2,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
-ACombatant::ACombatant()
+ACombatant::ACombatant(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -41,6 +42,16 @@ void ACombatant::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+float ACombatant::GetHealth()
+{
+	return CurrentHealth;
+}
+
+float ACombatant::GetMaxHealth()
+{
+	return MaxHealth;
 }
 
 void ACombatant::Attack()

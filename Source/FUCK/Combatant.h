@@ -6,14 +6,16 @@
 #include "GameFramework/Character.h"
 #include "Combatant.generated.h"
 
+
 UCLASS()
 class FUCK_API ACombatant : public ACharacter
 {
 	GENERATED_BODY()
+	DECLARE_MULTICAST_DELEGATE_OneParam(FHealthChangedSignature, float);
 
 public:
 	// Sets default values for this character's properties
-	ACombatant();
+	ACombatant(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 public:
 	// Called every frame
@@ -21,6 +23,10 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	float GetHealth();
+	float GetMaxHealth();
+	FHealthChangedSignature HealthChanged;
+	FHealthChangedSignature MaxHealthChanged;
 
 protected:
 	// Called when the game starts or when spawned
@@ -50,11 +56,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Animations")
 	TArray<UAnimMontage*> TakeHit_StumbleBackwards;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
+	float MaxHealth;
+
 	UPROPERTY(EditAnywhere, Category = "Animations")
 	TArray<UAnimMontage*> DeathAnimations;
-
-	UPROPERTY(EditAnywhere, BluePrintReadWrite, Category = "Health")
-	float MaxHealth;
 
 	UPROPERTY(EditAnywhere, BluePrintReadWrite, Category = "Health")
 	float CurrentHealth;

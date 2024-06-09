@@ -4,14 +4,26 @@
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/SceneComponent.h"
+#include "Kismet/BlueprintTypeConversions.h"
 
-AEnemyBase::AEnemyBase()
+AEnemyBase::AEnemyBase(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
+	HPBar = ObjectInitializer.CreateDefaultSubobject<UWidgetComponent>(this, TEXT("HealthBar"));
+	HPBar->SetupAttachment(GetMesh());
+
 	PrimaryActorTick.bCanEverTick = true;
 	MovingForward = false;
 	MovingBackwards = false;
 	Interruptable = true;
 	LastStumbleIndex = 0;
+}
+
+void AEnemyBase::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	HPBar->SetWidgetClass(CombatantWidgetClass);
 }
 
 void AEnemyBase::BeginPlay()
@@ -21,6 +33,15 @@ void AEnemyBase::BeginPlay()
 	ActiveState = State::IDLE;
 
 	Target = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+
+	if (CombatantWidgetClass)
+	{
+		if (const auto CombatantWidget = Cast<UCombatantWidget>(CreateWidget(GetGameInstance(), CombatantWidgetClass)))
+		{
+			CombatantWidget->Init(this);
+			HPBar->SetWidget(CombatantWidget);
+		}
+	}
 }
 
 void AEnemyBase::Tick(float DeltaTime)
@@ -101,6 +122,7 @@ void AEnemyBase::StateAttack()
 void AEnemyBase::Death()
 {
 	Super::Death();
+	HealthChanged.Broadcast(0.0f);
 	int AnimationIndex;
 	AnimationIndex = FMath::RandRange(0, DeathAnimations.Num() - 1);
 	PlayAnimMontage(DeathAnimations[AnimationIndex]);
@@ -155,6 +177,8 @@ float AEnemyBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent
 			return DamageAmount;
 		}
 
+		HealthChanged.Broadcast(CurrentHealth);
+		
 		if (!Interruptable)
 		{
 			return DamageAmount;
@@ -180,6 +204,7 @@ float AEnemyBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent
 		FRotator Rotation = FRotationMatrix::MakeFromX(Direction).Rotator();
 		SetActorRotation(Rotation);
 	}
+	
 	return DamageAmount;
 }
 

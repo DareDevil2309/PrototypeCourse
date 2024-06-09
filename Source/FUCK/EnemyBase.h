@@ -1,6 +1,8 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Combatant.h"
+#include "Components/WidgetComponent.h"
+#include "UI/CombatantWidget.h"
 #include "EnemyBase.generated.h"
 
 UENUM(BlueprintType)
@@ -16,14 +18,22 @@ class FUCK_API AEnemyBase : public ACombatant
 
 public:
 
-	AEnemyBase();
+	AEnemyBase(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+	virtual void PostInitializeComponents() override;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Finite State Machine")
 	State ActiveState;
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
 		class AController* EventInstigator, AActor* DamageCauser);
 
+
+	UPROPERTY(EditAnywhere, Category = "Health")
+	TSubclassOf<class UCombatantWidget> CombatantWidgetClass;
+	
+	UPROPERTY(Instanced, EditDefaultsOnly, Category = "Health")
+	UWidgetComponent* HPBar;
 	int LastStumbleIndex;
 
 protected:

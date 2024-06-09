@@ -15,9 +15,12 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "EnemyBase.h"
+#include "GameModeInfoCustomizer.h"
+#include "Blueprint/UserWidget.h"
 
 // Sets default values
-APlayerCharacter::APlayerCharacter()
+APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -98,6 +101,15 @@ void APlayerCharacter::BeginPlay()
 	for (auto& EnemyActor : NearActors) {
 		if (Cast<AEnemyBase>(EnemyActor))
 			NearbyEnemies.Add(EnemyActor);
+	}
+	
+	if (CombatantWidget)
+	{
+		if (auto Widget = Cast<UCombatantWidget>(CreateWidget(GetGameInstance(), CombatantWidget)))
+		{
+			Widget->Init(this);
+			Widget->AddToViewport();
+		}
 	}
 }
 
@@ -349,7 +361,6 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 	FRotator Rotation = FRotationMatrix::MakeFromX(Direction).Rotator();
 
 	SetActorRotation(Rotation);
-
 	return DamageAmount;
 }
 

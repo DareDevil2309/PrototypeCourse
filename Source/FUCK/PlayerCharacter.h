@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Combatant.h"
+#include "UI/CombatantWidget.h"
 #include "PlayerCharacter.generated.h"
 /**
  *
@@ -16,7 +17,7 @@ class FUCK_API APlayerCharacter : public ACombatant
 
 public:
 	// Sets default values for this character's properties
-	APlayerCharacter();
+	APlayerCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 protected:
 	// Called when the game starts or when spawned
@@ -52,6 +53,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	float CombatMovementSpeed;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Health")
+	TSubclassOf<class UCombatantWidget> CombatantWidget;
 
 	void CycleTarget(bool Clockwise = true);
 
