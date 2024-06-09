@@ -225,24 +225,28 @@ void AEnemyBase::MoveForward()
 
 void AEnemyBase::Attack(bool Rotate)
 {
-	Super::Attack();
-
-	SetMovingBackwards(false);
-	SetMovingForward(false);
-	SetState(State::ATTACK);
-	Cast<AAIController>(Controller)->StopMovement();
-
-	if (Rotate)
+	if (isAttackTurn)
 	{
-		FVector Direction = Target->GetActorLocation() - GetActorLocation();
-		Direction = FVector(Direction.X, Direction.Y, 0);
+		isAttackTurn = false;
+		Super::Attack();
 
-		FRotator Rotation = FRotationMatrix::MakeFromX(Direction).Rotator();
-		SetActorRotation(Rotation);
+		SetMovingBackwards(false);
+		SetMovingForward(false);
+		SetState(State::ATTACK);
+		Cast<AAIController>(Controller)->StopMovement();
+
+		if (Rotate)
+		{
+			FVector Direction = Target->GetActorLocation() - GetActorLocation();
+			Direction = FVector(Direction.X, Direction.Y, 0);
+
+			FRotator Rotation = FRotationMatrix::MakeFromX(Direction).Rotator();
+			SetActorRotation(Rotation);
+		}
+
+		int RandomIndex = FMath::RandRange(0, AttackAnimations.Num() - 1);
+		PlayAnimMontage(AttackAnimations[RandomIndex]);
 	}
-
-	int RandomIndex = FMath::RandRange(0, AttackAnimations.Num() - 1);
-	PlayAnimMontage(AttackAnimations[RandomIndex]);
 }
 
 void AEnemyBase::AttackNextReady()

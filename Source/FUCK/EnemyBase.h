@@ -32,6 +32,8 @@ public:
 
 	int LastStumbleIndex;
 
+	bool isAttackTurn = false;
+
 protected:
 
 	virtual void BeginPlay() override;
