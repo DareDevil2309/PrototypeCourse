@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Combatant.h"
 #include "UI/CombatantWidget.h"
+#include "UI/GameOver/UGameOverWidget.h"
 #include "PlayerCharacter.generated.h"
 /**
  *
@@ -56,6 +57,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Health")
 	TSubclassOf<class UCombatantWidget> CombatantWidget;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUGameOverWidget> GameOverWidget;
 
 	void CycleTarget(bool Clockwise = true);
 
@@ -113,6 +117,7 @@ protected:
 
 	void EndAttack();
 
+	void LoadGameOverScreen();
 	void Death();
 
 	void AttackNextReady();

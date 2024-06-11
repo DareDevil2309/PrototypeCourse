@@ -17,6 +17,7 @@
 #include "EnemyBase.h"
 #include "GameModeInfoCustomizer.h"
 #include "Blueprint/UserWidget.h"
+#include "UI/GameOver/UGameOverWidget.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
@@ -450,6 +451,19 @@ void APlayerCharacter::EndAttack()
 	AttackIndex = 0;
 }
 
+void APlayerCharacter::LoadGameOverScreen()
+{
+	if (GameOverWidget)
+	{
+		if (auto Widget = Cast<UUGameOverWidget>(CreateWidget(GetGameInstance(), GameOverWidget)))
+		{
+			Widget->Init();
+			Widget->AddToViewport();
+			GetLocalViewingPlayerController()->SetShowMouseCursor(true);
+		}
+	}
+}
+
 void APlayerCharacter::Death()
 {
 	Super::Death();
@@ -458,6 +472,8 @@ void APlayerCharacter::Death()
 	SetInCombat(false);
 	Dead = true;
 	PlayAnimMontage(DeathAnimations[0]);
+
+	LoadGameOverScreen();
 }
 
 void APlayerCharacter::AttackNextReady()
