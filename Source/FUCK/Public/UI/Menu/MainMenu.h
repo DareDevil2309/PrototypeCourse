@@ -15,4 +15,16 @@ class FUCK_API UMainMenu : public UUserWidget
 	GENERATED_BODY()
 public:
 	void Init();
+	
+	UFUNCTION(BlueprintCallable)
+	void StartGame();
+
+	UFUNCTION(BlueprintCallable)
+	void ExitGame();
+
+	UFUNCTION(BlueprintCallable)
+	void OpenSettings();
+
+	UPROPERTY(EditAnywhere)
+	TSoftObjectPtr<UWorld> StartLevel;
 };
