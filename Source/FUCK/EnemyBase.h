@@ -36,7 +36,11 @@ public:
 	UWidgetComponent* HPBar;
 	int LastStumbleIndex;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Health")
+	float HPBarShowDistance = 500.0f;
+
 	bool isAttackTurn = false;
+	
 
 protected:
 
@@ -82,5 +86,8 @@ public:
 	void FocusTarget();
 private:
 	bool pStateDeadExecuted = false;
+	float CheckPlayerTime = 0.0f;
+	float CheckPlayerTimeDelta = 0.5f;
+	void CheckHPBarVisibility();
 };
 

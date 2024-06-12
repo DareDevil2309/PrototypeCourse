@@ -47,6 +47,16 @@ void AEnemyBase::BeginPlay()
 void AEnemyBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (CheckPlayerTime >= CheckPlayerTimeDelta)
+	{
+		CheckPlayerTime = 0.0f;
+		CheckHPBarVisibility();
+	}
+	else
+	{
+		CheckPlayerTime += DeltaTime;
+	}
 }
 
 void AEnemyBase::TickStateMachine()
@@ -165,6 +175,20 @@ void AEnemyBase::FocusTarget()
 {
 	AAIController* Control = Cast<AAIController>(GetController());
 	Control->SetFocus(Target);
+}
+
+void AEnemyBase::CheckHPBarVisibility()
+{
+	auto playerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	
+	if (!playerCharacter)
+		return;
+	
+	auto playerLocation = playerCharacter->GetActorLocation();
+	auto location = GetActorLocation();
+	auto distance = FVector::Distance(playerLocation, location);
+
+	HPBar->SetVisibility(distance <= HPBarShowDistance);
 }
 
 float AEnemyBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
