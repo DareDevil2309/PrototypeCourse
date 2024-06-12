@@ -17,6 +17,7 @@
 #include "EnemyBase.h"
 #include "GameModeInfoCustomizer.h"
 #include "Blueprint/UserWidget.h"
+#include "Kismet/BlueprintTypeConversions.h"
 #include "UI/GameOver/UGameOverWidget.h"
 
 // Sets default values
@@ -207,6 +208,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		&APlayerCharacter::CycleTargetClockwise);
 	PlayerInputComponent->BindAction("CycleTarget-", IE_Pressed, this,
 		&APlayerCharacter::CycleTargetCounterClockwise);
+	PlayerInputComponent->BindAction("Pause", IE_Pressed, this,
+		&APlayerCharacter::ShowPauseMenu);
 }
 
 void APlayerCharacter::TurnAtRate(float Rate)
@@ -459,7 +462,18 @@ void APlayerCharacter::LoadGameOverScreen()
 		{
 			Widget->Init();
 			Widget->AddToViewport();
-			GetLocalViewingPlayerController()->SetShowMouseCursor(true);
+		}
+	}
+}
+
+void APlayerCharacter::ShowPauseMenu()
+{
+	if (PauseWidget)
+	{
+		if (auto Widget = Cast<UPauseMenu>(CreateWidget(GetGameInstance(), PauseWidget)))
+		{
+			Widget->Init();
+			Widget->AddToViewport();
 		}
 	}
 }

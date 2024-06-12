@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Combatant.h"
+#include "PauseMenu.h"
 #include "UI/CombatantWidget.h"
 #include "UI/GameOver/UGameOverWidget.h"
 #include "PlayerCharacter.generated.h"
@@ -60,6 +61,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UUGameOverWidget> GameOverWidget;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UPauseMenu> PauseWidget;
 
 	void CycleTarget(bool Clockwise = true);
 
@@ -117,7 +121,6 @@ protected:
 
 	void EndAttack();
 
-	void LoadGameOverScreen();
 	void Death();
 
 	void AttackNextReady();
@@ -137,6 +140,9 @@ protected:
 
 	void TurnAtRate(float Rate);
 	void LookUpAtRate(float Rate);
+	
+	void LoadGameOverScreen();
+	void ShowPauseMenu();
 
 public:
 

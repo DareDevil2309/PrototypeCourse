@@ -6,6 +6,7 @@
 
 void UUGameOverWidget::Init()
 {
+	GetOwningPlayer()->SetShowMouseCursor(true);
 	Inited();
 }
 
