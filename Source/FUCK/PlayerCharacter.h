@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Combatant.h"
 #include "PauseMenu.h"
+#include "XPController.h"
 #include "UI/CombatantWidget.h"
 #include "UI/GameOver/UGameOverWidget.h"
 #include "PlayerCharacter.generated.h"
@@ -57,7 +58,7 @@ public:
 	float CombatMovementSpeed;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Health")
-	TSubclassOf<class UCombatantWidget> CombatantWidget;
+	TSubclassOf<class UPlayerCharacterWidget> PlayerCharacterWidgetClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UUGameOverWidget> GameOverWidget;
@@ -111,6 +112,9 @@ public:
 	void OnEnemyDetectionEndOverlap(class UPrimitiveComponent*
 		OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex);
+
+	UXPController* XPController;
+	
 protected:
 
 	void MoveForward(float Value);
@@ -143,6 +147,7 @@ protected:
 	
 	void LoadGameOverScreen();
 	void ShowPauseMenu();
+	void OnLevelChanged(int Value);
 
 public:
 

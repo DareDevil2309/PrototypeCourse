@@ -39,6 +39,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Health")
 	float HPBarShowDistance = 500.0f;
 
+	UPROPERTY(EditAnywhere, Category = "XP")
+	float XpOnDeath = 2.0f;
+
 	bool isAttackTurn = false;
 	
 

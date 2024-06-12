@@ -1,5 +1,6 @@
 #include "EnemyBase.h"
 #include "AIController.h"
+#include "PlayerCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -212,6 +213,12 @@ float AEnemyBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent
 		if (CurrentHealth <= 0.0f)
 		{
 			SetState(State::DEAD);
+			
+			if (const auto Player = Cast<APlayerCharacter>(DamageCauser))
+			{
+				Player->XPController->AddXP(XpOnDeath);
+			}
+			
 			return DamageAmount;
 		}
 

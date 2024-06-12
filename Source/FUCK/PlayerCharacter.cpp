@@ -18,6 +18,7 @@
 #include "GameModeInfoCustomizer.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/BlueprintTypeConversions.h"
+#include "UI/PlayerCharacterWidget.h"
 #include "UI/GameOver/UGameOverWidget.h"
 
 // Sets default values
@@ -75,6 +76,8 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 		ECollisionResponse::ECR_Overlap);
 	EnemyDetectionCollider->SetSphereRadius(TargetLockDistance);
 
+	XPController = CreateDefaultSubobject<UXPController>(TEXT("XP Controller Component"));
+
 	Attacking = false;
 	Rolling = false;
 	TargetLocked = false;
@@ -103,15 +106,19 @@ void APlayerCharacter::BeginPlay()
 		if (Cast<AEnemyBase>(EnemyActor))
 			NearbyEnemies.Add(EnemyActor);
 	}
+
+	XPController->OnLevelChanged.AddUObject(this, &APlayerCharacter::OnLevelChanged);
 	
-	if (CombatantWidget)
+	if (PlayerCharacterWidgetClass)
 	{
-		if (auto Widget = Cast<UCombatantWidget>(CreateWidget(GetGameInstance(), CombatantWidget)))
+		if (const auto Widget = Cast<UPlayerCharacterWidget>(CreateWidget(GetGameInstance(), PlayerCharacterWidgetClass)))
 		{
 			Widget->Init(this);
 			Widget->AddToViewport();
 		}
 	}
+
+	XPController->Init();
 }
 
 // Called every frame
@@ -476,6 +483,14 @@ void APlayerCharacter::ShowPauseMenu()
 			Widget->AddToViewport();
 		}
 	}
+}
+
+void APlayerCharacter::OnLevelChanged(int Value)
+{
+	MaxHealth *= 1.1;
+	MaxHealthChanged.Broadcast(MaxHealth);
+	
+	ClassDamage *= 1.1;
 }
 
 void APlayerCharacter::Death()

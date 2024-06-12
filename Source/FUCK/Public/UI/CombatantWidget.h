@@ -37,7 +37,6 @@ public:
 protected:
 	virtual void NativeConstruct() override;
 private:
-	TObjectPtr<ACombatant> Owner;
 	void OnMaxHealthChanged(float Value);
 	void OnHealthChanged(float Value);
 };
