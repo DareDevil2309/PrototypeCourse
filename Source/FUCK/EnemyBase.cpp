@@ -206,6 +206,8 @@ float AEnemyBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent
 
 	else if (ActiveState != State::DEAD)
 	{
+		isAttackTurn = true;
+
 		CurrentHealth -= DamageAmount;
 
 		HealthChanged.Broadcast(CurrentHealth);
@@ -261,9 +263,6 @@ void AEnemyBase::MoveForward()
 
 void AEnemyBase::Attack(bool Rotate)
 {
-	if (isAttackTurn)
-	{
-		isAttackTurn = false;
 		Super::Attack();
 
 		SetMovingBackwards(false);
@@ -282,7 +281,6 @@ void AEnemyBase::Attack(bool Rotate)
 
 		int RandomIndex = FMath::RandRange(0, AttackAnimations.Num() - 1);
 		PlayAnimMontage(AttackAnimations[RandomIndex]);
-	}
 }
 
 void AEnemyBase::AttackNextReady()

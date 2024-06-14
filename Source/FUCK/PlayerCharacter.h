@@ -103,6 +103,20 @@ public:
 
 	FVector InputDirection;
 
+	UPROPERTY(EditAnywhere, BluePrintReadWrite, Category = "Stamina")
+	float CurrentStamina;
+
+	UPROPERTY(EditAnywhere, BluePrintReadWrite, Category = "Stamina")
+	float MaxStamina;
+
+	UPROPERTY(EditAnywhere, BluePrintReadWrite, Category = "Stamina")
+	float RollCostStamina;
+
+	UPROPERTY(EditAnywhere, BluePrintReadWrite, Category = "Stamina")
+	float AttackCostStamina;
+
+	bool Sprint = false;
+
 	UFUNCTION()
 	void OnEnemyDetectionBeginOverlap(UPrimitiveComponent* OverlappedComp,
 		AActor* OtherActor, UPrimitiveComponent* OtherComp,
@@ -122,6 +136,10 @@ protected:
 
 	void Attack();
 	void Jump();
+
+	void StartSprinting();
+
+	void StopSprinting();
 
 	void EndAttack();
 

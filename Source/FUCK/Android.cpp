@@ -35,8 +35,9 @@ void AAndroid::StateChaseClose()
 
 	float DotProduct = FVector::DotProduct(GetActorForwardVector(), TargetDirection.GetSafeNormal());
 
-	if (Distance <= 900.f && DotProduct >= 0.95f)
+	if (Distance <= 900.f && DotProduct >= 0.95f && isAttackTurn == true)
 	{
+		isAttackTurn = false;
 		if (Distance <= 300.f)
 		{
 			Attack(false);

@@ -26,12 +26,15 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Animations")
 	TArray<UAnimMontage*> MagicSpell;
+
+	UPROPERTY(EditAnywhere, Category = "Animations")
+	TArray<UAnimMontage*> LongAttackAnimation;
 	
 protected:
-	void Attack(bool Rotate = true);
 	void StateChaseClose();
 	void MoveForward();
 
+	void LongAttack(bool Rotate = true);
 	void MagicAttack(bool Rotate = true);
 
 private:

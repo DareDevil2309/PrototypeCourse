@@ -87,6 +87,14 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	PassiveMovementSpeed = 450.0f;
 	CombatMovementSpeed = 450.0f;
 	GetCharacterMovement()->MaxWalkSpeed = PassiveMovementSpeed;
+
+	MaxStamina = 100.0f;
+	CurrentStamina = MaxStamina;
+
+
+	RollCostStamina = 30.0f;
+	AttackCostStamina = 33.0f;
+
 }
 
 // Called when the game starts or when spawned
@@ -163,6 +171,31 @@ void APlayerCharacter::Tick(float DeltaTime)
 			}
 		}
 
+		if (Sprint)
+		{
+			if (!TargetLocked && GetCharacterMovement()->Velocity.Size() > 0.0f && CurrentStamina > 0.0f)
+			{
+				GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+				CurrentStamina = FMath::Clamp(CurrentStamina - 30 * DeltaTime, 0.0f, MaxStamina);
+			}
+			else
+			{
+				GetCharacterMovement()->MaxWalkSpeed = PassiveMovementSpeed;
+			}
+		}
+
+		else if (!Sprint && CurrentStamina < MaxStamina && !Rolling && !Attacking)
+		{
+			CurrentStamina = FMath::Clamp(CurrentStamina + 15 * DeltaTime, 0.0f, MaxStamina);
+			GetCharacterMovement()->MaxWalkSpeed = PassiveMovementSpeed;
+		}
+
+		if (GEngine)
+		{
+			FString StaminaText = FString::Printf(TEXT("Stamina: %.2f"), CurrentStamina);
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::White, StaminaText);
+		}
+
 		if (Target != NULL && TargetLocked)
 		{
 			if (dynamic_cast<AEnemyBase*>(Target)->ActiveState == State::DEAD) {
@@ -211,6 +244,10 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		&APlayerCharacter::Roll);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this,
 		&APlayerCharacter::Jump);
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this,
+		&APlayerCharacter::StartSprinting);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this,
+		&APlayerCharacter::StopSprinting);
 	PlayerInputComponent->BindAction("CycleTarget+", IE_Pressed, this,
 		&APlayerCharacter::CycleTargetClockwise);
 	PlayerInputComponent->BindAction("CycleTarget-", IE_Pressed, this,
@@ -434,8 +471,10 @@ void APlayerCharacter::OnEnemyDetectionEndOverlap(UPrimitiveComponent* Overlappe
 
 void APlayerCharacter::Attack()
 {
-	if ((!Attacking || NextAttackReady) && !Rolling && !Stumbling && !GetCharacterMovement()->IsFalling() && !Dead)
+	if ((!Attacking || NextAttackReady) && !Rolling && !Stumbling && !GetCharacterMovement()->IsFalling() && !Dead && CurrentStamina > 10.0f)
 	{
+		CurrentStamina = FMath::Clamp(CurrentStamina - AttackCostStamina, 0.0f, MaxStamina);
+
 		Super::Attack();
 
 		if (AttackIndex >= Attacks.Num())
@@ -453,6 +492,16 @@ void APlayerCharacter::Attack()
 			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::White, TEXT("Attack Action"));
 		}
 	} */
+}
+
+void APlayerCharacter::StartSprinting()
+{
+	Sprint = true;
+}
+
+void APlayerCharacter::StopSprinting()
+{
+	Sprint = false;
 }
 
 void APlayerCharacter::EndAttack()
@@ -520,10 +569,12 @@ void APlayerCharacter::Jump()
 
 void APlayerCharacter::Roll()
 {
-	if (Dead ||Attacking || Rolling || Stumbling || GetCharacterMovement()->IsFalling())
+	if (Dead ||Attacking || Rolling || Stumbling || GetCharacterMovement()->IsFalling() || CurrentStamina <= 30.0f)
 	{
 		return;
 	}
+
+	CurrentStamina = FMath::Clamp(CurrentStamina - RollCostStamina, 0.0f, MaxStamina);
 
 	EndAttack();
 
