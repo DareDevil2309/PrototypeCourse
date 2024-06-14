@@ -16,6 +16,7 @@ AAndroid::AAndroid()
 
 	LongAttack_Cooldown = 15.0f;
 	LongAttack_Timestamp = -LongAttack_Cooldown;
+	GetCharacterMovement()->MaxWalkSpeed = 450;
 }
 
 void AAndroid::Tick(float DeltaTime)

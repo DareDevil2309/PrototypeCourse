@@ -18,6 +18,9 @@ ASteamPunkMech2837::ASteamPunkMech2837()
 	DamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 	MagicSpell_Cooldown = 15.0f;
 	MagicSpell_Timestamp = -MagicSpell_Cooldown;
+	LongAttack_Cooldown = 5.0f;
+	LongAttack_Timestamp = -LongAttack_Cooldown;
+	GetCharacterMovement()->MaxWalkSpeed = 350.0f;
 }
 
 void ASteamPunkMech2837::Tick(float DeltaTime)
@@ -40,20 +43,20 @@ void ASteamPunkMech2837::StateChaseClose()
 	if (Distance <= 900.f && DotProduct >= 0.95f && isAttackTurn == true)
 	{
 		isAttackTurn = false;
-		if (UGameplayStatics::GetTimeSeconds(GetWorld()) >= MagicSpell_Timestamp + MagicSpell_Cooldown && AIController->LineOfSightTo(Target))
-		{
-			MagicSpell_Timestamp = UGameplayStatics::GetTimeSeconds(GetWorld());
-			MagicAttack(true);
-			return;
-		}
-
 		if (Distance <= 300.0f)
 		{
 			Attack(true);
 			return;
 		}
-		else if (Distance <= 600)
+		else if (UGameplayStatics::GetTimeSeconds(GetWorld()) >= MagicSpell_Timestamp + MagicSpell_Cooldown && AIController->LineOfSightTo(Target))
 		{
+			MagicSpell_Timestamp = UGameplayStatics::GetTimeSeconds(GetWorld());
+			MagicAttack(true);
+			return;
+		}
+		else if (Distance > 300 && UGameplayStatics::GetTimeSeconds(GetWorld()) >= LongAttack_Timestamp + LongAttack_Cooldown && AIController->LineOfSightTo(Target))
+		{
+			LongAttack_Timestamp = UGameplayStatics::GetTimeSeconds(GetWorld());
 			LongAttack(true);
 			return;
 		}
@@ -128,7 +131,7 @@ void ASteamPunkMech2837::LongAttack(bool Rotate)
 	}
 	AAIController* AIController = Cast<AAIController>(Controller);
 	float Distance = FVector::Distance(GetActorLocation(), Target->GetActorLocation());
-	ForwardSpeedAttack = Distance + 600.0f;
+	ForwardSpeedAttack = Distance + 400.0f;
 	PlayAnimMontage(LongAttackAnimation[0]);
 }
 

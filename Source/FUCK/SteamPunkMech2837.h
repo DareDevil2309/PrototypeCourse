@@ -42,6 +42,10 @@ private:
 	float MagicSpell_Cooldown;
 	float MagicSpell_Timestamp;
 
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	float LongAttack_Cooldown;
+	float LongAttack_Timestamp;
+
 	void StateAttack();
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
