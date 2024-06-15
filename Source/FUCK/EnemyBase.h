@@ -8,7 +8,7 @@
 UENUM(BlueprintType)
 enum class State : uint8
 {
-	IDLE,CHASE_CLOSE,CHASE_FAR,ATTACK,STUMBLE,TAUNT,DEAD					
+	IDLE,CHASE_CLOSE,CHASE_FAR,ATTACK,STUMBLE,TAUNT,DEAD, LongBossAttack
 };
 
 UCLASS()
@@ -37,7 +37,7 @@ public:
 	int LastStumbleIndex;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Health")
-	float HPBarShowDistance = 500.0f;
+	float HPBarShowDistance = 10000.0f;
 
 	UPROPERTY(EditAnywhere, Category = "XP")
 	float XpOnDeath = 2.0f;
@@ -46,7 +46,6 @@ public:
 	
 
 protected:
-
 	virtual void BeginPlay() override;
 
 	virtual void TickStateMachine();
@@ -80,6 +79,8 @@ protected:
 
 	bool Interruptable;
 
+	bool pStateDeadExecuted = false;
+
 public:
 
 	virtual void Tick(float DeltaTime) override;
@@ -88,7 +89,6 @@ public:
 
 	void FocusTarget();
 private:
-	bool pStateDeadExecuted = false;
 	float CheckPlayerTime = 0.0f;
 	float CheckPlayerTimeDelta = 0.5f;
 	void CheckHPBarVisibility();

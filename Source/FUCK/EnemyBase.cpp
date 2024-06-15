@@ -89,7 +89,6 @@ void AEnemyBase::TickStateMachine()
 		case State::TAUNT:
 			StateTaunt();
 			break;
-
 		case State::DEAD:
 			if (!pStateDeadExecuted)
 			{
