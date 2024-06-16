@@ -190,11 +190,12 @@ void APlayerCharacter::Tick(float DeltaTime)
 			GetCharacterMovement()->MaxWalkSpeed = PassiveMovementSpeed;
 		}
 
+		/*
 		if (GEngine)
 		{
 			FString StaminaText = FString::Printf(TEXT("Stamina: %.2f"), CurrentStamina);
 			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::White, StaminaText);
-		}
+		} */
 
 		if (Target != NULL && TargetLocked)
 		{
