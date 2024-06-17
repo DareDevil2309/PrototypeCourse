@@ -17,6 +17,9 @@
 #include "EnemyBase.h"
 #include "GameModeInfoCustomizer.h"
 #include "Blueprint/UserWidget.h"
+#include "Kismet/BlueprintTypeConversions.h"
+#include "UI/PlayerCharacterWidget.h"
+#include "UI/GameOver/UGameOverWidget.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
@@ -73,6 +76,8 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 		ECollisionResponse::ECR_Overlap);
 	EnemyDetectionCollider->SetSphereRadius(TargetLockDistance);
 
+	XPController = CreateDefaultSubobject<UXPController>(TEXT("XP Controller Component"));
+
 	Attacking = false;
 	Rolling = false;
 	TargetLocked = false;
@@ -82,6 +87,14 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	PassiveMovementSpeed = 450.0f;
 	CombatMovementSpeed = 450.0f;
 	GetCharacterMovement()->MaxWalkSpeed = PassiveMovementSpeed;
+
+	MaxStamina = 100.0f;
+	CurrentStamina = MaxStamina;
+
+
+	RollCostStamina = 30.0f;
+	AttackCostStamina = 33.0f;
+
 }
 
 // Called when the game starts or when spawned
@@ -101,15 +114,19 @@ void APlayerCharacter::BeginPlay()
 		if (Cast<AEnemyBase>(EnemyActor))
 			NearbyEnemies.Add(EnemyActor);
 	}
+
+	XPController->OnLevelChanged.AddUObject(this, &APlayerCharacter::OnLevelChanged);
 	
-	if (CombatantWidget)
+	if (PlayerCharacterWidgetClass)
 	{
-		if (auto Widget = Cast<UCombatantWidget>(CreateWidget(GetGameInstance(), CombatantWidget)))
+		if (const auto Widget = Cast<UPlayerCharacterWidget>(CreateWidget(GetGameInstance(), PlayerCharacterWidgetClass)))
 		{
 			Widget->Init(this);
 			Widget->AddToViewport();
 		}
 	}
+
+	XPController->Init();
 }
 
 // Called every frame
@@ -153,6 +170,32 @@ void APlayerCharacter::Tick(float DeltaTime)
 				}
 			}
 		}
+
+		if (Sprint)
+		{
+			if (!TargetLocked && GetCharacterMovement()->Velocity.Size() > 0.0f && CurrentStamina > 0.0f)
+			{
+				GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+				CurrentStamina = FMath::Clamp(CurrentStamina - 30 * DeltaTime, 0.0f, MaxStamina);
+			}
+			else
+			{
+				GetCharacterMovement()->MaxWalkSpeed = PassiveMovementSpeed;
+			}
+		}
+
+		else if (!Sprint && CurrentStamina < MaxStamina && !Rolling && !Attacking)
+		{
+			CurrentStamina = FMath::Clamp(CurrentStamina + 15 * DeltaTime, 0.0f, MaxStamina);
+			GetCharacterMovement()->MaxWalkSpeed = PassiveMovementSpeed;
+		}
+
+		/*
+		if (GEngine)
+		{
+			FString StaminaText = FString::Printf(TEXT("Stamina: %.2f"), CurrentStamina);
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::White, StaminaText);
+		} */
 
 		if (Target != NULL && TargetLocked)
 		{
@@ -202,10 +245,16 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		&APlayerCharacter::Roll);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this,
 		&APlayerCharacter::Jump);
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this,
+		&APlayerCharacter::StartSprinting);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this,
+		&APlayerCharacter::StopSprinting);
 	PlayerInputComponent->BindAction("CycleTarget+", IE_Pressed, this,
 		&APlayerCharacter::CycleTargetClockwise);
 	PlayerInputComponent->BindAction("CycleTarget-", IE_Pressed, this,
 		&APlayerCharacter::CycleTargetCounterClockwise);
+	PlayerInputComponent->BindAction("Pause", IE_Pressed, this,
+		&APlayerCharacter::ShowPauseMenu);
 }
 
 void APlayerCharacter::TurnAtRate(float Rate)
@@ -423,8 +472,10 @@ void APlayerCharacter::OnEnemyDetectionEndOverlap(UPrimitiveComponent* Overlappe
 
 void APlayerCharacter::Attack()
 {
-	if ((!Attacking || NextAttackReady) && !Rolling && !Stumbling && !GetCharacterMovement()->IsFalling() && !Dead)
+	if ((!Attacking || NextAttackReady) && !Rolling && !Stumbling && !GetCharacterMovement()->IsFalling() && !Dead && CurrentStamina > 10.0f)
 	{
+		CurrentStamina = FMath::Clamp(CurrentStamina - AttackCostStamina, 0.0f, MaxStamina);
+
 		Super::Attack();
 
 		if (AttackIndex >= Attacks.Num())
@@ -444,10 +495,52 @@ void APlayerCharacter::Attack()
 	} */
 }
 
+void APlayerCharacter::StartSprinting()
+{
+	Sprint = true;
+}
+
+void APlayerCharacter::StopSprinting()
+{
+	Sprint = false;
+}
+
 void APlayerCharacter::EndAttack()
 {
 	Super::EndAttack();
 	AttackIndex = 0;
+}
+
+void APlayerCharacter::LoadGameOverScreen()
+{
+	if (GameOverWidget)
+	{
+		if (auto Widget = Cast<UUGameOverWidget>(CreateWidget(GetGameInstance(), GameOverWidget)))
+		{
+			Widget->Init();
+			Widget->AddToViewport();
+		}
+	}
+}
+
+void APlayerCharacter::ShowPauseMenu()
+{
+	if (PauseWidget)
+	{
+		if (auto Widget = Cast<UPauseMenu>(CreateWidget(GetGameInstance(), PauseWidget)))
+		{
+			Widget->Init();
+			Widget->AddToViewport();
+		}
+	}
+}
+
+void APlayerCharacter::OnLevelChanged(int Value)
+{
+	MaxHealth *= 1.1;
+	MaxHealthChanged.Broadcast(MaxHealth);
+	
+	ClassDamage *= 1.1;
 }
 
 void APlayerCharacter::Death()
@@ -458,6 +551,8 @@ void APlayerCharacter::Death()
 	SetInCombat(false);
 	Dead = true;
 	PlayAnimMontage(DeathAnimations[0]);
+
+	LoadGameOverScreen();
 }
 
 void APlayerCharacter::AttackNextReady()
@@ -475,10 +570,12 @@ void APlayerCharacter::Jump()
 
 void APlayerCharacter::Roll()
 {
-	if (Dead ||Attacking || Rolling || Stumbling || GetCharacterMovement()->IsFalling())
+	if (Dead ||Attacking || Rolling || Stumbling || GetCharacterMovement()->IsFalling() || CurrentStamina <= 30.0f)
 	{
 		return;
 	}
+
+	CurrentStamina = FMath::Clamp(CurrentStamina - RollCostStamina, 0.0f, MaxStamina);
 
 	EndAttack();
 

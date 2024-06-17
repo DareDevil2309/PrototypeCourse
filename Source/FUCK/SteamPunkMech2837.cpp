@@ -18,6 +18,9 @@ ASteamPunkMech2837::ASteamPunkMech2837()
 	DamageCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 	MagicSpell_Cooldown = 15.0f;
 	MagicSpell_Timestamp = -MagicSpell_Cooldown;
+	LongAttack_Cooldown = 5.0f;
+	LongAttack_Timestamp = -LongAttack_Cooldown;
+	GetCharacterMovement()->MaxWalkSpeed = 350.0f;
 }
 
 void ASteamPunkMech2837::Tick(float DeltaTime)
@@ -25,30 +28,6 @@ void ASteamPunkMech2837::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	TickStateMachine();
-}
-
-void ASteamPunkMech2837::Attack(bool Rotate)
-{
-	Super::Attack();
-
-	SetMovingBackwards(false);
-	SetMovingForward(false);
-	SetState(State::ATTACK);
-
-	Cast<AAIController>(Controller)->StopMovement();
-
-	if (Rotate)
-	{
-		FVector Direction = Target->GetActorLocation() - GetActorLocation();
-		Direction = FVector(Direction.X, Direction.Y, 0);
-
-		FRotator Rotation = FRotationMatrix::MakeFromX(Direction).Rotator();
-		SetActorRotation(Rotation);
-	}
-	AAIController* AIController = Cast<AAIController>(Controller);
-	float Distance = FVector::Distance(GetActorLocation(), Target->GetActorLocation());
-	ForwardSpeedAttack = Distance + 400.0f;
-	PlayAnimMontage(AttackAnimations[1]);
 }
 
 void ASteamPunkMech2837::StateChaseClose()
@@ -61,9 +40,10 @@ void ASteamPunkMech2837::StateChaseClose()
 
 	float DotProduct = FVector::DotProduct(GetActorForwardVector(), TargetDirection.GetSafeNormal());
 
-	if (Distance <= 900.f && DotProduct >= 0.95f)
+	if (Distance <= 900.f && DotProduct >= 0.95f && isAttackTurn == true)
 	{
-		if (Distance <= 150.0f)
+		isAttackTurn = false;
+		if (Distance <= 300.0f)
 		{
 			Attack(true);
 			return;
@@ -72,6 +52,12 @@ void ASteamPunkMech2837::StateChaseClose()
 		{
 			MagicSpell_Timestamp = UGameplayStatics::GetTimeSeconds(GetWorld());
 			MagicAttack(true);
+			return;
+		}
+		else if (Distance > 300 && UGameplayStatics::GetTimeSeconds(GetWorld()) >= LongAttack_Timestamp + LongAttack_Cooldown && AIController->LineOfSightTo(Target))
+		{
+			LongAttack_Timestamp = UGameplayStatics::GetTimeSeconds(GetWorld());
+			LongAttack(true);
 			return;
 		}
 	}
@@ -123,6 +109,30 @@ void ASteamPunkMech2837::StateAttack()
 	{
 		MoveForward();
 	}
+}
+
+void ASteamPunkMech2837::LongAttack(bool Rotate)
+{
+	Super::Attack();
+
+	SetMovingBackwards(false);
+	SetMovingForward(false);
+	SetState(State::ATTACK);
+
+	Cast<AAIController>(Controller)->StopMovement();
+
+	if (Rotate)
+	{
+		FVector Direction = Target->GetActorLocation() - GetActorLocation();
+		Direction = FVector(Direction.X, Direction.Y, 0);
+
+		FRotator Rotation = FRotationMatrix::MakeFromX(Direction).Rotator();
+		SetActorRotation(Rotation);
+	}
+	AAIController* AIController = Cast<AAIController>(Controller);
+	float Distance = FVector::Distance(GetActorLocation(), Target->GetActorLocation());
+	ForwardSpeedAttack = Distance + 400.0f;
+	PlayAnimMontage(LongAttackAnimation[0]);
 }
 
 void ASteamPunkMech2837::MagicAttack(bool Rotate)

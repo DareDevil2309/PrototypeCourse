@@ -16,6 +16,7 @@ AAndroid::AAndroid()
 
 	LongAttack_Cooldown = 15.0f;
 	LongAttack_Timestamp = -LongAttack_Cooldown;
+	GetCharacterMovement()->MaxWalkSpeed = 450;
 }
 
 void AAndroid::Tick(float DeltaTime)
@@ -35,8 +36,9 @@ void AAndroid::StateChaseClose()
 
 	float DotProduct = FVector::DotProduct(GetActorForwardVector(), TargetDirection.GetSafeNormal());
 
-	if (Distance <= 900.f && DotProduct >= 0.95f)
+	if (Distance <= 900.f && DotProduct >= 0.95f && isAttackTurn == true)
 	{
+		isAttackTurn = false;
 		if (Distance <= 300.f)
 		{
 			Attack(false);

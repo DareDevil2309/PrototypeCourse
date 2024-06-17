@@ -1,5 +1,6 @@
 #include "EnemyBase.h"
 #include "AIController.h"
+#include "PlayerCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -47,6 +48,16 @@ void AEnemyBase::BeginPlay()
 void AEnemyBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (CheckPlayerTime >= CheckPlayerTimeDelta)
+	{
+		CheckPlayerTime = 0.0f;
+		CheckHPBarVisibility();
+	}
+	else
+	{
+		CheckPlayerTime += DeltaTime;
+	}
 }
 
 void AEnemyBase::TickStateMachine()
@@ -78,7 +89,6 @@ void AEnemyBase::TickStateMachine()
 		case State::TAUNT:
 			StateTaunt();
 			break;
-
 		case State::DEAD:
 			if (!pStateDeadExecuted)
 			{
@@ -167,6 +177,20 @@ void AEnemyBase::FocusTarget()
 	Control->SetFocus(Target);
 }
 
+void AEnemyBase::CheckHPBarVisibility()
+{
+	auto playerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	
+	if (!playerCharacter)
+		return;
+	
+	auto playerLocation = playerCharacter->GetActorLocation();
+	auto location = GetActorLocation();
+	auto distance = FVector::Distance(playerLocation, location);
+
+	HPBar->SetVisibility(distance <= HPBarShowDistance);
+}
+
 float AEnemyBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	if (DamageCauser == this)
@@ -181,6 +205,8 @@ float AEnemyBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent
 
 	else if (ActiveState != State::DEAD)
 	{
+		isAttackTurn = true;
+
 		CurrentHealth -= DamageAmount;
 
 		HealthChanged.Broadcast(CurrentHealth);
@@ -188,6 +214,12 @@ float AEnemyBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent
 		if (CurrentHealth <= 0.0f)
 		{
 			SetState(State::DEAD);
+			
+			if (const auto Player = Cast<APlayerCharacter>(DamageCauser))
+			{
+				Player->XPController->AddXP(XpOnDeath);
+			}
+			
 			return DamageAmount;
 		}
 
@@ -230,9 +262,6 @@ void AEnemyBase::MoveForward()
 
 void AEnemyBase::Attack(bool Rotate)
 {
-	if (isAttackTurn)
-	{
-		isAttackTurn = false;
 		Super::Attack();
 
 		SetMovingBackwards(false);
@@ -251,7 +280,6 @@ void AEnemyBase::Attack(bool Rotate)
 
 		int RandomIndex = FMath::RandRange(0, AttackAnimations.Num() - 1);
 		PlayAnimMontage(AttackAnimations[RandomIndex]);
-	}
 }
 
 void AEnemyBase::AttackNextReady()

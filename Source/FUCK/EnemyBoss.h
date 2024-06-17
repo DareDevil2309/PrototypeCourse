@@ -18,27 +18,54 @@ public:
 
 	AEnemyBoss();
 
-	UPROPERTY(EditAnywhere, Category = "Animations")
-	TArray<UAnimMontage*> LongAttackAnimations;
+	virtual void Tick(float DeltaTime) override;
 
-	float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
-		AController* EventInstigator, AActor* DamageCauser);
+	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
+	UCapsuleComponent* DamageCollisionForHand;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
+	UCapsuleComponent* DamageCollisionForLongAttack;
+
+	UPROPERTY(EditAnywhere, Category = "Animations")
+	TArray<UAnimMontage*> MagicSpell;
+
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "LongAttackDamage")
+	void Explosion();
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category = "MagicAttackIndex")
+	int MagicIndex = 0;
 
 protected:
-
 	void StateChaseClose();
-	void LongAttack(bool Rotate = true);
+
+	void StateLongBossAttack();
+
+	virtual void TickStateMachine();
+
 	void MoveForward();
 
-private:
-	// long range jump attack
+	void LongAttack(bool Rotate = true);
 
+	UFUNCTION(BlueprintCallable, Category = "MagicAttack")
+	void MagicAttack(bool Rotate = true);
+
+	UFUNCTION(BlueprintCallable, Category = "MagicAttack")
+	void IncreaseMagicIndex();
+
+	UFUNCTION(BlueprintCallable, Category = "MagicAttack")
+	void ReloadMagicIndex();
+
+private:
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	float LongAttack_Cooldown;
 	float LongAttack_Timestamp;
-	float LongAttack_ForwardSpeed;
 
-	// after x consecutive hits, the enemy cannot be interrupted
-	int QuickHitsTaken;
-	float QuickHitsTimestamp;
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	float MagicSpell_Cooldown;
+	float MagicSpell_Timestamp;
+
+	void StateAttack();
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	float ForwardSpeedAttack;
 };

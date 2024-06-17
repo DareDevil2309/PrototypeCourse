@@ -5,12 +5,11 @@
 
 void UCombatantWidget::Init(ACombatant* Combatant)
 {
-	Owner = Combatant;
-	Health = Owner->GetHealth();
-	MaxHealth = Owner->GetMaxHealth();
+	Health = Combatant->GetHealth();
+	MaxHealth = Combatant->GetMaxHealth();
 	OnHealthInited();
-	Owner->HealthChanged.AddUObject(this, &UCombatantWidget::OnHealthChanged);
-	Owner->MaxHealthChanged.AddUObject(this, &UCombatantWidget::OnMaxHealthChanged);
+	Combatant->HealthChanged.AddUObject(this, &UCombatantWidget::OnHealthChanged);
+	Combatant->MaxHealthChanged.AddUObject(this, &UCombatantWidget::OnMaxHealthChanged);
 }
 
 void UCombatantWidget::NativeConstruct()
