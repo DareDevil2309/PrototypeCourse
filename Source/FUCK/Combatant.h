@@ -25,6 +25,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	float GetHealth();
 	float GetMaxHealth();
+	void SetHealth(float health);
 	FHealthChangedSignature HealthChanged;
 	FHealthChangedSignature MaxHealthChanged;
 

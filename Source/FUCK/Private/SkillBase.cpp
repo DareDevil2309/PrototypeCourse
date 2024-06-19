@@ -6,8 +6,6 @@
 
 USkillBase::USkillBase()
 {
-	player = nullptr;
-	skillsComponent = nullptr;
 	cooldownTimestamp = 0.f;
 	cooldown = 0.f;
 }

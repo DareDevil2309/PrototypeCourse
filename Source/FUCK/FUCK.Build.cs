@@ -8,7 +8,7 @@ public class FUCK : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "UMG", "UIFramework", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "AIModule", "GameplayCameras", "HeadMountedDisplay" });
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", "UMG", "UIFramework", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "AIModule", "GameplayCameras", "HeadMountedDisplay", "Niagara" });
         PrivateDependencyModuleNames.AddRange(new string[] {"Slate", "SlateCore" });
     }
 }

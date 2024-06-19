@@ -54,6 +54,12 @@ float ACombatant::GetMaxHealth()
 	return MaxHealth;
 }
 
+void ACombatant::SetHealth(float health)
+{
+	CurrentHealth = FMath::Clamp(health, 0.f, MaxHealth);
+	HealthChanged.Broadcast(CurrentHealth);
+}
+
 void ACombatant::Attack()
 {
 	Attacking = true;
